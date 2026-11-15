@@ -9,7 +9,7 @@ Lovelace card for Samsung washers and dryers exposed by the Home Assistant Smart
 - remaining time, end time and cycle phases
 - start, pause, resume and stop
 - cycle selection
-- the options of the selected cycle: temperature, spin, rinses, dry level, drying time, delay end, Bubble Soak, wrinkle prevent, Auto Cycle Link, automatic detergent and softener dosing
+- the options of the selected cycle: temperature, spin, rinses, dry level, drying time, delay end, Bubble Soak, wrinkle prevent, Auto Cycle Link, automatic dosing, detergent amount and water hardness, softener amount and concentration
 - detergent and softener levels
 
 This [fork](https://github.com/marsje-core/smartthings-card) adds support for another Samsung washer and firmware variant (`DA_WM_TP1_21_COMMON`), including through LocalThings. I also provide Dutch translations.
@@ -49,6 +49,14 @@ name: Washer # optional
 `entity: <any entity of the appliance>` can replace `device_id`.
 
 ## Releases
+
+To publish `dev`, go to **Actions → Publish dev to main** and run the workflow
+with `main` selected. It merges `dev` into `main` and starts the release
+workflow. Merge conflicts stop the workflow without updating `main`; resolve
+them on `dev` before trying again. The repository must allow GitHub Actions to
+push to `main`. Merge the workflow into `main` once first (for example through
+a one-time pull request); GitHub only offers manually triggered workflows that
+are present on the default branch.
 
 Each push to `main` publishes a GitHub release for HACS. Patch versions start at
 `v1.2.3` and increase with the first-parent commit count, so version numbers may
