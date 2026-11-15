@@ -8,6 +8,8 @@ Lovelace card for Samsung washers and dryers exposed by the Home Assistant Smart
 - the options of the selected cycle: temperature, spin, rinses, dry level, drying time, delay end, Bubble Soak, wrinkle prevent, Auto Cycle Link, dispense amounts
 - detergent and softener levels
 
+The original card was created by [CappyT (Gabriele Turelli)](https://github.com/CappyT). Thank you for creating and sharing it! This fork adds support for another Samsung washer and firmware variant (`DA_WM_TP1_21_COMMON`), including through LocalThings.
+
 The card finds the entities of the device by `translation_key`, so it does not depend on entity IDs. LocalThings cycle actions use its start, pause, and stop buttons; options are limited to entities exposed by the appliance. The accent color is the theme `--primary-color`.
 
 If the same appliance is registered through both integrations, choose the LocalThings device in the card configuration to see its locally exposed options. Selecting the SmartThings device only shows its SmartThings entities.
