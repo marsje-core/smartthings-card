@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          base=e6fb7cc258f13960718ec0896922d18c60fe2ff6
+          if ! git rev-list --first-parent "$GITHUB_SHA" | grep -Fx "$base" > /dev/null; then
+            echo "Release baseline is not in the first-parent history of main" >&2
+            exit 1
+          fi
+          count=$(git rev-list --first-parent --count "$base..$GITHUB_SHA")
+          if [ "$count" -lt 1 ]; then
+            echo "Release commit must follow the release baseline" >&2
+            exit 1
+          fi
+          echo "version=1.2.$((count + 2))" >> "$GITHUB_OUTPUT"
+
+      - name: Publish release
+        uses: actions/github-script@v7
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        with:
+          script: |
+            const fs = require("fs");
+            const version = process.env.VERSION;
+            const tag = `v${version}`;
+            const filename = "smartthings-laundry-card.js";
+            const source = fs.readFileSync(filename, "utf8");
+            const pattern = /^const VERSION = "[^"]+";$/m;
+            if (!pattern.test(source)) throw new Error("Card version declaration not found");
+            const data = Buffer.from(source.replace(pattern, `const VERSION = "${version}";`));
+            const { owner, repo } = context.repo;
+            const release = await github.rest.repos.createRelease({
+              owner, repo, tag_name: tag, target_commitish: context.sha,
+              name: tag, draft: true, generate_release_notes: true,
+            });
+            await github.rest.repos.uploadReleaseAsset({
+              owner, repo, release_id: release.data.id, name: filename, data,
+              headers: { "content-type": "application/javascript" },
+            });
+            await github.rest.repos.updateRelease({
+              owner, repo, release_id: release.data.id, draft: false, make_latest: "legacy",
+            });

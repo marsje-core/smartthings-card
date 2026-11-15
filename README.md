@@ -40,6 +40,14 @@ name: Washer # optional
 
 `entity: <any entity of the appliance>` can replace `device_id`.
 
+## Releases
+
+Each push to `main` publishes a GitHub release for HACS. Patch versions start at
+`v1.2.3` and increase with the first-parent commit count, so version numbers may
+skip when multiple commits are pushed together. Avoid rewriting the history of
+`main`: release versions depend on that history. The release asset's console
+version is set to the release version automatically.
+
 ## Development
 
 `dev/harness.html` renders the card with a mocked `hass` object:
