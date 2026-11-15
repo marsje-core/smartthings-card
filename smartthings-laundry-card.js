@@ -9,7 +9,7 @@
  *   name: Lavatrice               # optional
  */
 
-const VERSION = "1.2.0";
+const VERSION = "1.2.2";
 
 // Entities are found by translation_key, entity_ids differ per device.
 const ROLES = {
@@ -39,13 +39,17 @@ const ROLES = {
   "select.drying_time": "dryingTime",
   "select.detergent_amount": "detergentAmount",
   "select.detergent_quantity": "detergentAmount",
+  "select.detergent_water_hardness": "detergentHardness",
   "select.softener_amount": "softenerAmount",
   "select.softener_quantity": "softenerAmount",
+  "select.softener_concentration": "softenerConcentration",
   "number.washer_rinse_cycles": "rinse",
   "select.rinse_cycles": "rinse",
   "number.delay_end": "delayEnd",
   "number.delay_start_hours": "delayStart",
   "switch.bubble_soak": "bubbleSoak",
+  "switch.pre_wash": "preWash",
+  "switch.intensive": "intensive",
   "switch.wrinkle_prevent": "wrinklePrevent",
   "switch.auto_cycle_link": "autoCycleLink",
   "binary_sensor.remote_control": "remote",
@@ -82,8 +86,10 @@ const I18N = {
     dryLevel: "Grado asciugatura", dryingTime: "Durata",
     delayEnd: "Fine programmata", delayStart: "Partenza ritardata", off: "Off", in: "tra",
     bubbleSoak: "Bubble Soak", wrinklePrevent: "Antipiega", autoCycleLink: "Auto Cycle Link",
+    preWash: "Prelavaggio", intensive: "Intensivo",
     detergent: "Detersivo", softener: "Ammorbidente",
     detergentAmount: "Dose detersivo", softenerAmount: "Dose ammorbidente",
+    detergentHardness: "Durezza dell'acqua", softenerConcentration: "Concentrazione ammorbidente",
     device: "Impostazioni dispositivo", close: "Chiudi",
   },
   en: {
@@ -102,8 +108,10 @@ const I18N = {
     dryLevel: "Dry level", dryingTime: "Drying time",
     delayEnd: "Delay end", delayStart: "Delay start", off: "Off", in: "in",
     bubbleSoak: "Bubble Soak", wrinklePrevent: "Wrinkle prevent", autoCycleLink: "Auto Cycle Link",
+    preWash: "Prewash", intensive: "Intensive",
     detergent: "Detergent", softener: "Softener",
     detergentAmount: "Detergent amount", softenerAmount: "Softener amount",
+    detergentHardness: "Water hardness", softenerConcentration: "Softener concentration",
     device: "Device settings", close: "Close",
   },
   nl: {
@@ -122,8 +130,10 @@ const I18N = {
     dryLevel: "Droogtegraad", dryingTime: "Droogtijd",
     delayEnd: "Eindtijd uitstellen", delayStart: "Start uitstellen", off: "Uit", in: "over",
     bubbleSoak: "Bubble Soak", wrinklePrevent: "Kreukpreventie", autoCycleLink: "Auto Cycle Link",
+    preWash: "Voorwas", intensive: "Intensief",
     detergent: "Wasmiddel", softener: "Wasverzachter",
     detergentAmount: "Hoeveelheid wasmiddel", softenerAmount: "Hoeveelheid wasverzachter",
+    detergentHardness: "Waterhardheid", softenerConcentration: "Concentratie wasverzachter",
     device: "Apparaatinstellingen", close: "Sluiten",
   },
 };
@@ -134,10 +144,14 @@ const OPTION_TILES = {
     { role: "spin", icon: "mdi:rotate-right", label: "spinLevel" },
     { role: "rinse", icon: "mdi:water-sync", label: "rinseCount" },
     { role: "delayEnd", icon: "mdi:timer-sand", label: "delayEnd" },
-    { role: "delayStart", icon: "mdi:timer-plus-outline", label: "delayStart" },
+    { role: "delayStart", icon: "mdi:timer-plus-outline", label: "delayEnd" },
     { role: "bubbleSoak", icon: "mdi:chart-bubble", label: "bubbleSoak" },
+    { role: "preWash", icon: "mdi:washing-machine", label: "preWash" },
+    { role: "intensive", icon: "mdi:water-plus", label: "intensive" },
     { role: "detergentAmount", icon: "mdi:cup-water", label: "detergentAmount" },
+    { role: "detergentHardness", icon: "mdi:water", label: "detergentHardness" },
     { role: "softenerAmount", icon: "mdi:flower", label: "softenerAmount" },
+    { role: "softenerConcentration", icon: "mdi:flask-outline", label: "softenerConcentration" },
   ],
   dryer: [
     { role: "dryLevel", icon: "mdi:water-percent", label: "dryLevel" },
@@ -166,7 +180,11 @@ function readAppliance(hass, config) {
   const ents = {};
   for (const entry of Object.values(hass.entities || {})) {
     if (entry.device_id !== deviceId || !["smartthings", "localthings"].includes(entry.platform)) continue;
-    const role = ROLES[`${entry.entity_id.split(".")[0]}.${entry.translation_key}`];
+    const domain = entry.entity_id.split(".")[0];
+    const key = entry.translation_key || "";
+    const localCycle = entry.platform === "localthings" && domain === "select" &&
+      (key === "cycle" || /^(washer|dryer)_cycle(?:_table_[a-z0-9]+)?$/.test(key));
+    const role = localCycle ? "cycle" : ROLES[`${domain}.${key}`];
     const stateObj = hass.states[entry.entity_id];
     if (role && stateObj && !ents[role]) ents[role] = stateObj;
   }
@@ -580,7 +598,9 @@ class SmartThingsLaundryDialog extends HTMLElement {
         const domain = s.entity_id.split(".")[0];
         const unavailable = s.state === "unavailable";
         // Supply amounts can change mid-cycle, cycle options cannot.
-        const disabled = unavailable || (locked && !["detergentAmount", "softenerAmount"].includes(tile.role));
+        const supplyOptions = ["detergentAmount", "detergentHardness", "softenerAmount", "softenerConcentration"];
+        const disabled = unavailable || (locked && !supplyOptions.includes(tile.role)) ||
+          (domain === "switch" && s.state !== "on" && s.attributes.course_supported === false);
         const isOn = domain === "switch" && s.state === "on";
         let value;
         if (domain === "switch") value = isOn ? "On" : "Off";

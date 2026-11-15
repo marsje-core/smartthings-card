@@ -44,14 +44,18 @@ add("L","sensor.l_remaining","completion_minutes","116",{},"localthings");
 add("L","button.l_start","start","unknown",{},"localthings");
 add("L","button.l_pause","pause","unknown",{},"localthings");
 add("L","button.l_stop","stop","unknown",{},"localthings");
-add("L","select.l_cycle","washer_cycle","1C",{options:["1C","1D"]},"localthings");
+add("L","select.l_cycle","washer_cycle_table_02","1C",{options:["1C","1D"]},"localthings");
 add("L","select.l_temp","wash_temperature","60",{options:["Cold","20","30","40","60","90"]},"localthings");
 add("L","select.l_spin","spin_speed","1200",{options:["NoSpin","400","800","1000","1200","1400"]},"localthings");
 add("L","select.l_rinse","rinse_cycles","2",{options:["0","1","2","3","4","5"]},"localthings");
 add("L","number.l_delay","delay_start_hours","0",{min:0,max:24,step:1,unit_of_measurement:"h"},"localthings");
 add("L","switch.l_bubble","bubble_soak","off",{},"localthings");
+add("L","switch.l_pre_wash","pre_wash","off",{},"localthings");
+add("L","switch.l_intensive","intensive","off",{},"localthings");
 add("L","select.l_detergent","detergent_quantity","01",{options:["00","01","02","03"]},"localthings");
+add("L","select.l_hardness","detergent_water_hardness","01",{options:["01","02","03"]},"localthings");
 add("L","select.l_softener","softener_quantity","01",{options:["00","01","02","03"]},"localthings");
+add("L","select.l_concentration","softener_concentration","01",{options:["01","02","03"]},"localthings");
 add("L","binary_sensor.l_remote","remote_control","on",{},"localthings");
 const hass={states:S,entities:E,devices:{W:{name:"Washer"},D:{name:"Dryer"},L:{name:"WW11DB8B95GBU3"}},language:"en",locale:{language:"en"},
  formatEntityState:(s,v)=>(v??s.state).replace(/_/g," "),

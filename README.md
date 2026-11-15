@@ -10,6 +10,8 @@ Lovelace card for Samsung washers and dryers exposed by the Home Assistant Smart
 
 The card finds the entities of the device by `translation_key`, so it does not depend on entity IDs. LocalThings cycle actions use its start, pause, and stop buttons; options are limited to entities exposed by the appliance. The accent color is the theme `--primary-color`.
 
+If the same appliance is registered through both integrations, choose the LocalThings device in the card configuration to see its locally exposed options. Selecting the SmartThings device only shows its SmartThings entities.
+
 ![Washer and dryer tiles](https://raw.githubusercontent.com/CappyT/smartthings-card/main/images/tiles.png)
 
 ![Washer dialog](https://raw.githubusercontent.com/CappyT/smartthings-card/main/images/dialog.png)
@@ -33,7 +35,7 @@ The card finds the entities of the device by `translation_key`, so it does not d
 ```yaml
 type: custom:smartthings-laundry-card
 device_id: <device id of the washer or dryer>
-name: Lavatrice # optional
+name: Washer # optional
 ```
 
 `entity: <any entity of the appliance>` can replace `device_id`.
