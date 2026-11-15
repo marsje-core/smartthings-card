@@ -25,6 +25,8 @@ const ROLES = {
   "binary_sensor.cycle_active": "cycleActive",
   "sensor.detergent_level": "detergent",
   "sensor.softener_level": "softener",
+  "switch.auto_detergent": "autoDetergent",
+  "switch.auto_softener": "autoSoftener",
   "select.operating_state": "operating",
   "button.start": "start",
   "button.pause": "pause",
@@ -91,8 +93,10 @@ const I18N = {
     bubbleSoak: "Bubble Soak", wrinklePrevent: "Antipiega", autoCycleLink: "Auto Cycle Link",
     preWash: "Prelavaggio", intensive: "Intensivo",
     detergent: "Detersivo", softener: "Ammorbidente",
+    autoDetergent: "Dosaggio automatico detersivo", autoSoftener: "Dosaggio automatico ammorbidente",
     detergentAmount: "Dose detersivo", softenerAmount: "Dose ammorbidente",
     detergentHardness: "Durezza dell'acqua", softenerConcentration: "Concentrazione ammorbidente",
+    on: "Attivo",
     device: "Impostazioni dispositivo", close: "Chiudi",
   },
   en: {
@@ -113,8 +117,10 @@ const I18N = {
     bubbleSoak: "Bubble Soak", wrinklePrevent: "Wrinkle prevent", autoCycleLink: "Auto Cycle Link",
     preWash: "Prewash", intensive: "Intensive",
     detergent: "Detergent", softener: "Softener",
+    autoDetergent: "Automatic detergent dosing", autoSoftener: "Automatic softener dosing",
     detergentAmount: "Detergent amount", softenerAmount: "Softener amount",
     detergentHardness: "Water hardness", softenerConcentration: "Softener concentration",
+    on: "On",
     device: "Device settings", close: "Close",
   },
   nl: {
@@ -135,8 +141,10 @@ const I18N = {
     bubbleSoak: "Bubble Soak", wrinklePrevent: "Kreukpreventie", autoCycleLink: "Auto Cycle Link",
     preWash: "Voorwas", intensive: "Intensief",
     detergent: "Wasmiddel", softener: "Wasverzachter",
+    autoDetergent: "Automatische wasmiddeldosering", autoSoftener: "Automatische wasverzachterdosering",
     detergentAmount: "Hoeveelheid wasmiddel", softenerAmount: "Hoeveelheid wasverzachter",
     detergentHardness: "Waterhardheid", softenerConcentration: "Concentratie wasverzachter",
+    on: "Aan",
     device: "Apparaatinstellingen", close: "Sluiten",
   },
 };
@@ -151,10 +159,13 @@ const OPTION_TILES = {
     { role: "bubbleSoak", icon: "mdi:chart-bubble", label: "bubbleSoak" },
     { role: "preWash", icon: "mdi:washing-machine", label: "preWash" },
     { role: "intensive", icon: "mdi:water-plus", label: "intensive" },
-    { role: "detergentAmount", icon: "mdi:cup-water", label: "detergentAmount" },
+    { role: "autoDetergent", icon: "mdi:cup-water", label: "autoDetergent" },
+    { role: "autoSoftener", icon: "mdi:flower", label: "autoSoftener" },
+    // Keep these available for later; the dispenser settings aren't ready to expose yet.
+    // { role: "detergentAmount", icon: "mdi:cup-water", label: "detergentAmount" },
     { role: "detergentHardness", icon: "mdi:water", label: "detergentHardness" },
-    { role: "softenerAmount", icon: "mdi:flower", label: "softenerAmount" },
-    { role: "softenerConcentration", icon: "mdi:flask-outline", label: "softenerConcentration" },
+    // { role: "softenerAmount", icon: "mdi:flower", label: "softenerAmount" },
+    // { role: "softenerConcentration", icon: "mdi:flask-outline", label: "softenerConcentration" },
   ],
   dryer: [
     { role: "dryLevel", icon: "mdi:water-percent", label: "dryLevel" },
@@ -176,6 +187,17 @@ function resolveDevice(hass, config) {
   return hass.entities?.[config.entity]?.device_id;
 }
 
+function homeAssistantLanguage(hass = document.querySelector("home-assistant")?.hass) {
+  const language = (hass?.locale?.language || hass?.language || document.documentElement.lang || "en").toLowerCase();
+  return language.startsWith("it") ? "it" : language.startsWith("nl") ? "nl" : "en";
+}
+
+const CARD_NAMES = {
+  it: "Lavatrice e asciugatrice (SmartThings)",
+  nl: "Wasmachine en droger (SmartThings)",
+  en: "Washer and dryer (SmartThings)",
+};
+
 // Snapshot of the appliance: role -> state object, plus derived status.
 function readAppliance(hass, config) {
   const deviceId = resolveDevice(hass, config);
@@ -196,8 +218,7 @@ function readAppliance(hass, config) {
   const kind = [machineEntry?.translation_key, cycleEntry?.translation_key].some((key) => key?.includes("dryer"))
     ? "dryer"
     : "washer";
-  const language = (hass.locale?.language || hass.language || "en").toLowerCase();
-  const lang = language.startsWith("it") ? "it" : language.startsWith("nl") ? "nl" : "en";
+  const lang = homeAssistantLanguage(hass);
   const t = (k) => I18N[lang][k] ?? I18N.en[k] ?? k;
 
   const machine = ents.machineState?.state;
@@ -606,7 +627,7 @@ class SmartThingsLaundryDialog extends HTMLElement {
           (domain === "switch" && s.state !== "on" && s.attributes.course_supported === false);
         const isOn = domain === "switch" && s.state === "on";
         let value;
-        if (domain === "switch") value = isOn ? "On" : "Off";
+        if (domain === "switch") value = isOn ? a.t("on") : a.t("off");
         else if (tile.role === "delayEnd") value = Number(s.state) > 0 ? formatDuration(Number(s.state)) : a.t("off");
         else if (tile.role === "delayStart") value = Number(s.state) > 0 ? formatDuration(Number(s.state) * 60) : a.t("off");
         else if (domain === "number") value = s.state;
@@ -833,7 +854,9 @@ customElements.define("smartthings-laundry-dialog", SmartThingsLaundryDialog);
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "smartthings-laundry-card",
-  name: "Lavatrice e asciugatrice (SmartThings)",
+  get name() {
+    return CARD_NAMES[homeAssistantLanguage()];
+  },
   description: "Samsung washer and dryer with a more-info style control dialog.",
   preview: false,
 });

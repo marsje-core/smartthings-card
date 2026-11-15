@@ -56,6 +56,8 @@ add("L","select.l_detergent","detergent_quantity","01",{options:["00","01","02",
 add("L","select.l_hardness","detergent_water_hardness","01",{options:["01","02","03"]},"localthings");
 add("L","select.l_softener","softener_quantity","01",{options:["00","01","02","03"]},"localthings");
 add("L","select.l_concentration","softener_concentration","01",{options:["01","02","03"]},"localthings");
+add("L","switch.l_auto_detergent","auto_detergent","on",{},"localthings");
+add("L","switch.l_auto_softener","auto_softener","off",{},"localthings");
 add("L","binary_sensor.l_remote","remote_control","on",{},"localthings");
 const hass={states:S,entities:E,devices:{W:{name:"Washer"},D:{name:"Dryer"},L:{name:"WW11DB8B95GBU3"}},language:"en",locale:{language:"en"},
  formatEntityState:(s,v)=>(v??s.state).replace(/_/g," "),
