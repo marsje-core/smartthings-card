@@ -58,7 +58,7 @@ const ROLES = {
 
 const PHASES = {
   washer: [
-    { key: "wash", icon: "mdi:water", states: ["weight_sensing", "pre_wash", "wash", "ai_wash", "air_wash", "freeze_protection", "drumcleaning", "drum_cleaning"] },
+    { key: "wash", icon: "mdi:water", states: ["weight_sensing", "pre_wash", "wash", "ai_wash", "air_wash", "freeze_protection"] },
     { key: "rinse", icon: "mdi:water-sync", states: ["rinse", "ai_rinse"] },
     { key: "spin", icon: "mdi:rotate-right", states: ["spin", "ai_spin", "drying", "cooling", "wrinkle_prevent"] },
   ],
@@ -67,12 +67,15 @@ const PHASES = {
     { key: "cool", icon: "mdi:snowflake", states: ["cooling"] },
     { key: "wrinkle", icon: "mdi:tshirt-crew-outline", states: ["wrinkle_prevent"] },
   ],
+  drumClean: [
+    { key: "drumClean", icon: "mdi:washing-machine", states: ["drumcleaning", "drum_cleaning"] },
+  ],
 };
 
 const I18N = {
   it: {
     washer: "Lavatrice", dryer: "Asciugatrice",
-    wash: "Lavaggio", rinse: "Risciacquo", spin: "Centrifuga",
+    wash: "Lavaggio", rinse: "Risciacquo", spin: "Centrifuga", drumClean: "Pulizia cestello",
     dry: "Asciugatura", cool: "Raffreddamento", wrinkle: "Antipiega",
     running: "In funzione", paused: "In pausa", ready: "Pronta", finished: "Completato",
     delayed: "Partenza programmata", unavailable: "Non disponibile",
@@ -94,7 +97,7 @@ const I18N = {
   },
   en: {
     washer: "Washer", dryer: "Dryer",
-    wash: "Wash", rinse: "Rinse", spin: "Spin",
+    wash: "Wash", rinse: "Rinse", spin: "Spin", drumClean: "Drum cleaning",
     dry: "Drying", cool: "Cooling", wrinkle: "Wrinkle prevent",
     running: "Running", paused: "Paused", ready: "Ready", finished: "Finished",
     delayed: "Delayed start", unavailable: "Unavailable",
@@ -116,7 +119,7 @@ const I18N = {
   },
   nl: {
     washer: "Wasmachine", dryer: "Droger",
-    wash: "Wassen", rinse: "Spoelen", spin: "Centrifugeren",
+    wash: "Wassen", rinse: "Spoelen", spin: "Centrifugeren", drumClean: "Trommelreiniging",
     dry: "Drogen", cool: "Afkoelen", wrinkle: "Kreukpreventie",
     running: "Bezig", paused: "Gepauzeerd", ready: "Gereed", finished: "Klaar",
     delayed: "Uitgestelde start", unavailable: "Niet beschikbaar",
@@ -207,7 +210,7 @@ function readAppliance(hass, config) {
   const paused = machine === "pause";
   const active = cycleActive === "on" || running || paused;
   const delayed = ["delay_wash", "delaywash"].includes(job);
-  const phases = PHASES[kind];
+  const phases = kind === "washer" && PHASES.drumClean[0].states.includes(job) ? PHASES.drumClean : PHASES[kind];
   const phaseIndex = active ? phases.findIndex((p) => p.states.includes(job)) : -1;
   const finished = !active && (job === "finish" || job === "finished");
 
@@ -341,7 +344,7 @@ class SmartThingsLaundryCard extends HTMLElement {
     if (!this._config) return;
     const a = readAppliance(this._hass, this._config);
     const sig = JSON.stringify([
-      a.name, a.status, a.remainingMin, a.phaseIndex, a.active, a.running, a.remoteOn, a.available, this._config.name,
+      a.name, a.status, a.remainingMin, a.phases.map((p) => p.key), a.phaseIndex, a.active, a.running, a.remoteOn, a.available, this._config.name,
     ]);
     if (sig === this._sig) return;
     this._sig = sig;
