@@ -161,11 +161,10 @@ const OPTION_TILES = {
     { role: "intensive", icon: "mdi:water-plus", label: "intensive" },
     { role: "autoDetergent", icon: "mdi:cup-water", label: "autoDetergent" },
     { role: "autoSoftener", icon: "mdi:flower", label: "autoSoftener" },
-    // Keep these available for later; the dispenser settings aren't ready to expose yet.
-    // { role: "detergentAmount", icon: "mdi:cup-water", label: "detergentAmount" },
+    { role: "detergentAmount", icon: "mdi:cup-water", label: "detergentAmount" },
     { role: "detergentHardness", icon: "mdi:water", label: "detergentHardness" },
-    // { role: "softenerAmount", icon: "mdi:flower", label: "softenerAmount" },
-    // { role: "softenerConcentration", icon: "mdi:flask-outline", label: "softenerConcentration" },
+    { role: "softenerAmount", icon: "mdi:flower", label: "softenerAmount" },
+    { role: "softenerConcentration", icon: "mdi:flask-outline", label: "softenerConcentration" },
   ],
   dryer: [
     { role: "dryLevel", icon: "mdi:water-percent", label: "dryLevel" },
