@@ -50,6 +50,14 @@ name: Washer # optional
 
 ## Releases
 
+To publish `dev`, go to **Actions → Publish dev to main** and run the workflow
+with `main` selected. It merges `dev` into `main` and starts the release
+workflow. Merge conflicts stop the workflow without updating `main`; resolve
+them on `dev` before trying again. The repository must allow GitHub Actions to
+push to `main`. Merge the workflow into `main` once first (for example through
+a one-time pull request); GitHub only offers manually triggered workflows that
+are present on the default branch.
+
 Each push to `main` publishes a GitHub release for HACS. Patch versions start at
 `v1.2.3` and increase with the first-parent commit count, so version numbers may
 skip when multiple commits are pushed together. Avoid rewriting the history of

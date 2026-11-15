@@ -1,0 +1,55 @@
+name: Publish dev to main
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: publish-dev-to-main
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Merge dev into main
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merge and push dev
+        id: merge
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin \
+            +refs/heads/main:refs/remotes/origin/main \
+            +refs/heads/dev:refs/remotes/origin/dev
+          git merge --ff-only origin/main
+
+          if git merge-base --is-ancestor origin/dev HEAD; then
+            echo "dev is already included in main; nothing to publish."
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git merge --no-ff --no-edit origin/dev
+          git push origin HEAD:refs/heads/main
+          echo "merged=true" >> "$GITHUB_OUTPUT"
+
+      - name: Start release workflow
+        if: steps.merge.outputs.merged == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: "release.yaml",
+              ref: "main",
+            });
