@@ -187,6 +187,17 @@ function resolveDevice(hass, config) {
   return hass.entities?.[config.entity]?.device_id;
 }
 
+function homeAssistantLanguage(hass = document.querySelector("home-assistant")?.hass) {
+  const language = (hass?.locale?.language || hass?.language || document.documentElement.lang || "en").toLowerCase();
+  return language.startsWith("it") ? "it" : language.startsWith("nl") ? "nl" : "en";
+}
+
+const CARD_NAMES = {
+  it: "Lavatrice e asciugatrice (SmartThings)",
+  nl: "Wasmachine en droger (SmartThings)",
+  en: "Washer and dryer (SmartThings)",
+};
+
 // Snapshot of the appliance: role -> state object, plus derived status.
 function readAppliance(hass, config) {
   const deviceId = resolveDevice(hass, config);
@@ -207,8 +218,7 @@ function readAppliance(hass, config) {
   const kind = [machineEntry?.translation_key, cycleEntry?.translation_key].some((key) => key?.includes("dryer"))
     ? "dryer"
     : "washer";
-  const language = (hass.locale?.language || hass.language || "en").toLowerCase();
-  const lang = language.startsWith("it") ? "it" : language.startsWith("nl") ? "nl" : "en";
+  const lang = homeAssistantLanguage(hass);
   const t = (k) => I18N[lang][k] ?? I18N.en[k] ?? k;
 
   const machine = ents.machineState?.state;
@@ -844,7 +854,9 @@ customElements.define("smartthings-laundry-dialog", SmartThingsLaundryDialog);
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "smartthings-laundry-card",
-  name: "Lavatrice e asciugatrice (SmartThings)",
+  get name() {
+    return CARD_NAMES[homeAssistantLanguage()];
+  },
   description: "Samsung washer and dryer with a more-info style control dialog.",
   preview: false,
 });
