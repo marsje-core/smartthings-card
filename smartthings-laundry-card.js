@@ -1,36 +1,50 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 /*
- * SmartThings laundry card: Samsung washer and dryer (DA_WM_TP2_20_COMMON)
- * exposed by the SmartThings integration. Tile on the dashboard, more-info
- * style dialog with the essential controls.
+ * Samsung washer and dryer exposed by the SmartThings or LocalThings
+ * integration. Tile on the dashboard, more-info style dialog with the
+ * essential controls.
  *
  *   type: custom:smartthings-laundry-card
  *   device_id: <device id>        # or: entity: <any entity of the appliance>
  *   name: Lavatrice               # optional
  */
 
-const VERSION = "1.1.2";
+const VERSION = "1.2.0";
 
 // Entities are found by translation_key, entity_ids differ per device.
 const ROLES = {
   "sensor.washer_machine_state": "machineState",
   "sensor.dryer_machine_state": "machineState",
+  "sensor.machine_state": "machineState",
   "sensor.washer_job_state": "jobState",
   "sensor.dryer_job_state": "jobState",
+  "sensor.progress": "jobState",
   "sensor.completion_time": "completion",
+  "sensor.finish_time": "finishTime",
+  "sensor.completion_minutes": "completionMinutes",
+  "binary_sensor.cycle_active": "cycleActive",
   "sensor.detergent_level": "detergent",
   "sensor.softener_level": "softener",
   "select.operating_state": "operating",
+  "button.start": "start",
+  "button.pause": "pause",
+  "button.stop": "stop",
   "select.washer_cycle": "cycle",
   "select.dryer_cycle": "cycle",
   "select.water_temperature": "temperature",
+  "select.wash_temperature": "temperature",
   "select.spin_level": "spin",
+  "select.spin_speed": "spin",
   "select.dry_level": "dryLevel",
   "select.drying_time": "dryingTime",
   "select.detergent_amount": "detergentAmount",
+  "select.detergent_quantity": "detergentAmount",
   "select.softener_amount": "softenerAmount",
+  "select.softener_quantity": "softenerAmount",
   "number.washer_rinse_cycles": "rinse",
+  "select.rinse_cycles": "rinse",
   "number.delay_end": "delayEnd",
+  "number.delay_start_hours": "delayStart",
   "switch.bubble_soak": "bubbleSoak",
   "switch.wrinkle_prevent": "wrinklePrevent",
   "switch.auto_cycle_link": "autoCycleLink",
@@ -40,7 +54,7 @@ const ROLES = {
 
 const PHASES = {
   washer: [
-    { key: "wash", icon: "mdi:water", states: ["weight_sensing", "pre_wash", "wash", "ai_wash", "air_wash", "freeze_protection"] },
+    { key: "wash", icon: "mdi:water", states: ["weight_sensing", "pre_wash", "wash", "ai_wash", "air_wash", "freeze_protection", "drumcleaning", "drum_cleaning"] },
     { key: "rinse", icon: "mdi:water-sync", states: ["rinse", "ai_rinse"] },
     { key: "spin", icon: "mdi:rotate-right", states: ["spin", "ai_spin", "drying", "cooling", "wrinkle_prevent"] },
   ],
@@ -66,7 +80,7 @@ const I18N = {
     locked_running: "Non modificabile durante il ciclo",
     temperature: "Temperatura", spinLevel: "Centrifuga", rinseCount: "Risciacqui",
     dryLevel: "Grado asciugatura", dryingTime: "Durata",
-    delayEnd: "Fine programmata", off: "Off", in: "tra",
+    delayEnd: "Fine programmata", delayStart: "Partenza ritardata", off: "Off", in: "tra",
     bubbleSoak: "Bubble Soak", wrinklePrevent: "Antipiega", autoCycleLink: "Auto Cycle Link",
     detergent: "Detersivo", softener: "Ammorbidente",
     detergentAmount: "Dose detersivo", softenerAmount: "Dose ammorbidente",
@@ -86,11 +100,31 @@ const I18N = {
     locked_running: "Locked while a cycle runs",
     temperature: "Temperature", spinLevel: "Spin", rinseCount: "Rinses",
     dryLevel: "Dry level", dryingTime: "Drying time",
-    delayEnd: "Delay end", off: "Off", in: "in",
+    delayEnd: "Delay end", delayStart: "Delay start", off: "Off", in: "in",
     bubbleSoak: "Bubble Soak", wrinklePrevent: "Wrinkle prevent", autoCycleLink: "Auto Cycle Link",
     detergent: "Detergent", softener: "Softener",
     detergentAmount: "Detergent amount", softenerAmount: "Softener amount",
     device: "Device settings", close: "Close",
+  },
+  nl: {
+    washer: "Wasmachine", dryer: "Droger",
+    wash: "Wassen", rinse: "Spoelen", spin: "Centrifugeren",
+    dry: "Drogen", cool: "Afkoelen", wrinkle: "Kreukpreventie",
+    running: "Bezig", paused: "Gepauzeerd", ready: "Gereed", finished: "Klaar",
+    delayed: "Uitgestelde start", unavailable: "Niet beschikbaar",
+    start: "Starten", resume: "Hervatten", pause: "Pauzeren", stop: "Stoppen",
+    ends_at: "Klaar om", left: "resterend",
+    remote_off: "Bediening op afstand is uitgeschakeld. Schakel deze in op het apparaat om het te bedienen.",
+    child_lock: "Kinderslot is ingeschakeld",
+    program: "Programma", options: "Opties", supplies: "Wasmiddelen",
+    locked_running: "Niet aanpasbaar tijdens een programma",
+    temperature: "Temperatuur", spinLevel: "Centrifugeren", rinseCount: "Spoelbeurten",
+    dryLevel: "Droogtegraad", dryingTime: "Droogtijd",
+    delayEnd: "Eindtijd uitstellen", delayStart: "Start uitstellen", off: "Uit", in: "over",
+    bubbleSoak: "Bubble Soak", wrinklePrevent: "Kreukpreventie", autoCycleLink: "Auto Cycle Link",
+    detergent: "Wasmiddel", softener: "Wasverzachter",
+    detergentAmount: "Hoeveelheid wasmiddel", softenerAmount: "Hoeveelheid wasverzachter",
+    device: "Apparaatinstellingen", close: "Sluiten",
   },
 };
 
@@ -100,6 +134,7 @@ const OPTION_TILES = {
     { role: "spin", icon: "mdi:rotate-right", label: "spinLevel" },
     { role: "rinse", icon: "mdi:water-sync", label: "rinseCount" },
     { role: "delayEnd", icon: "mdi:timer-sand", label: "delayEnd" },
+    { role: "delayStart", icon: "mdi:timer-plus-outline", label: "delayStart" },
     { role: "bubbleSoak", icon: "mdi:chart-bubble", label: "bubbleSoak" },
     { role: "detergentAmount", icon: "mdi:cup-water", label: "detergentAmount" },
     { role: "softenerAmount", icon: "mdi:flower", label: "softenerAmount" },
@@ -130,37 +165,47 @@ function readAppliance(hass, config) {
   const device = deviceId ? hass.devices?.[deviceId] : undefined;
   const ents = {};
   for (const entry of Object.values(hass.entities || {})) {
-    if (entry.device_id !== deviceId || entry.platform !== "smartthings") continue;
+    if (entry.device_id !== deviceId || !["smartthings", "localthings"].includes(entry.platform)) continue;
     const role = ROLES[`${entry.entity_id.split(".")[0]}.${entry.translation_key}`];
     const stateObj = hass.states[entry.entity_id];
     if (role && stateObj && !ents[role]) ents[role] = stateObj;
   }
-  const kind =
-    ents.machineState?.entity_id && hass.entities[ents.machineState.entity_id].translation_key.startsWith("dryer")
-      ? "dryer"
-      : ents.cycle && hass.entities[ents.cycle.entity_id].translation_key === "dryer_cycle"
-        ? "dryer"
-        : "washer";
-  const lang = (hass.locale?.language || hass.language || "en").startsWith("it") ? "it" : "en";
+  const machineEntry = ents.machineState && hass.entities[ents.machineState.entity_id];
+  const cycleEntry = ents.cycle && hass.entities[ents.cycle.entity_id];
+  const kind = [machineEntry?.translation_key, cycleEntry?.translation_key].some((key) => key?.includes("dryer"))
+    ? "dryer"
+    : "washer";
+  const language = (hass.locale?.language || hass.language || "en").toLowerCase();
+  const lang = language.startsWith("it") ? "it" : language.startsWith("nl") ? "nl" : "en";
   const t = (k) => I18N[lang][k] ?? I18N.en[k] ?? k;
 
   const machine = ents.machineState?.state;
   const job = ents.jobState?.state;
   const available = machine !== undefined && machine !== "unavailable";
-  const running = machine === "run";
+  const cycleActive = ents.cycleActive?.state;
+  const running =
+    machine === "run" ||
+    (machine === "active" && (cycleActive === undefined || cycleActive === "on"));
   const paused = machine === "pause";
-  const active = running || paused;
-  const delayed = job === "delay_wash";
+  const active = cycleActive === "on" || running || paused;
+  const delayed = ["delay_wash", "delaywash"].includes(job);
   const phases = PHASES[kind];
   const phaseIndex = active ? phases.findIndex((p) => p.states.includes(job)) : -1;
   const finished = !active && (job === "finish" || job === "finished");
 
   let remainingMin = null;
   let endsAt = null;
-  const completion = ents.completion?.state;
+  const minutes = Number(ents.completionMinutes?.state);
+  if (active && Number.isFinite(minutes) && !["unknown", "unavailable"].includes(ents.completionMinutes?.state)) {
+    remainingMin = Math.max(0, Math.round(minutes));
+  }
+  const completion = (ents.finishTime || ents.completion)?.state;
   if (active && completion && !["unknown", "unavailable"].includes(completion)) {
-    endsAt = new Date(completion);
-    remainingMin = Math.max(0, Math.round((endsAt - Date.now()) / 60000));
+    const date = new Date(completion);
+    if (!Number.isNaN(date.getTime())) {
+      endsAt = date;
+      if (remainingMin == null) remainingMin = Math.max(0, Math.round((endsAt - Date.now()) / 60000));
+    }
   }
 
   let status;
@@ -175,8 +220,23 @@ function readAppliance(hass, config) {
     deviceId, device, ents, kind, lang, t, machine, job, available, running, paused, active,
     delayed, phases, phaseIndex, finished, remainingMin, endsAt, status,
     remoteOn: ents.remote ? ents.remote.state === "on" : true,
+    canOperate: Boolean(ents.operating || (ents.start && ents.pause)),
     name: device?.name_by_user || device?.name || t(kind),
   };
+}
+
+function operationService(a, option) {
+  if (a.ents.operating) {
+    return {
+      domain: "select",
+      service: "select_option",
+      data: { entity_id: a.ents.operating.entity_id, option },
+    };
+  }
+  const button = a.ents[option === "run" ? "start" : option];
+  return button
+    ? { domain: "button", service: "press", data: { entity_id: button.entity_id } }
+    : null;
 }
 
 function formatDuration(min) {
@@ -213,7 +273,7 @@ class SmartThingsLaundryCard extends HTMLElement {
   static getConfigForm() {
     return {
       schema: [
-        { name: "device_id", required: true, selector: { device: { integration: "smartthings" } } },
+        { name: "device_id", required: true, selector: { device: {} } },
         { name: "name", selector: { text: {} } },
       ],
     };
@@ -221,7 +281,8 @@ class SmartThingsLaundryCard extends HTMLElement {
 
   static getStubConfig(hass) {
     const entry = Object.values(hass.entities || {}).find(
-      (e) => e.platform === "smartthings" && ["washer_machine_state", "dryer_machine_state"].includes(e.translation_key),
+      (e) => ["smartthings", "localthings"].includes(e.platform) &&
+        ["washer_machine_state", "dryer_machine_state", "machine_state"].includes(e.translation_key),
     );
     return { device_id: entry?.device_id || "" };
   }
@@ -272,7 +333,7 @@ class SmartThingsLaundryCard extends HTMLElement {
     }
     const name = this._config.name || a.name;
     const secondary = a.active && a.remainingMin != null ? `${a.status} · ${formatDuration(a.remainingMin)}` : a.status;
-    const canToggle = a.available && a.remoteOn && a.active && a.ents.operating;
+    const canToggle = a.available && a.remoteOn && a.active && a.canOperate;
     const segments = a.phases
       .map((_, i) => `<span class="seg ${i < a.phaseIndex ? "done" : i === a.phaseIndex ? "now" : ""}"></span>`)
       .join("");
@@ -314,10 +375,8 @@ class SmartThingsLaundryCard extends HTMLElement {
     if (action === "toggle") {
       ev.stopPropagation();
       const a = readAppliance(this._hass, this._config);
-      this._hass.callService("select", "select_option", {
-        entity_id: a.ents.operating.entity_id,
-        option: a.running ? "pause" : "run",
-      });
+      const operation = operationService(a, a.running ? "pause" : "run");
+      if (operation) this._hass.callService(operation.domain, operation.service, operation.data);
       return;
     }
     this._openDialog();
@@ -403,7 +462,7 @@ class SmartThingsLaundryDialog extends HTMLElement {
   _template(a, name) {
     const { t } = a;
     const locked = a.active || !a.available;
-    const ctlDisabled = !a.available || !a.remoteOn || !a.ents.operating;
+    const ctlDisabled = !a.available || !a.remoteOn || !a.canOperate;
     return `
         <div class="header">
           <button class="icon-btn" data-action="close" title="${esc(t("close"))}"><ha-icon icon="mdi:close"></ha-icon></button>
@@ -481,7 +540,7 @@ class SmartThingsLaundryDialog extends HTMLElement {
       <button class="ctl primary${busy(main.opt)}" data-action="operate" data-option="${main.opt}" ${disabled ? "disabled" : ""}>
         <ha-icon icon="${main.icon}"></ha-icon><span>${esc(main.label)}</span>
       </button>
-      <button class="ctl${busy("stop")}" data-action="operate" data-option="stop" ${disabled || !a.active ? "disabled" : ""}>
+      <button class="ctl${busy("stop")}" data-action="operate" data-option="stop" ${disabled || !a.active || (!a.ents.operating && !a.ents.stop) ? "disabled" : ""}>
         <ha-icon icon="mdi:stop"></ha-icon><span>${esc(t("stop"))}</span>
       </button>`;
   }
@@ -526,6 +585,7 @@ class SmartThingsLaundryDialog extends HTMLElement {
         let value;
         if (domain === "switch") value = isOn ? "On" : "Off";
         else if (tile.role === "delayEnd") value = Number(s.state) > 0 ? formatDuration(Number(s.state)) : a.t("off");
+        else if (tile.role === "delayStart") value = Number(s.state) > 0 ? formatDuration(Number(s.state) * 60) : a.t("off");
         else if (domain === "number") value = s.state;
         else value = unavailable ? "-" : optionLabel(this._hass, tile.role, s, s.state);
         const open = this._open === tile.role && !disabled;
@@ -558,6 +618,10 @@ class SmartThingsLaundryDialog extends HTMLElement {
         ? value > 0
           ? `${a.t("in")} ${formatDuration(value)}`
           : a.t("off")
+        : tile.role === "delayStart"
+          ? value > 0
+            ? `${a.t("in")} ${formatDuration(value * 60)}`
+            : a.t("off")
         : String(value);
     return `
       <div class="stepper-ctl">
@@ -615,7 +679,8 @@ class SmartThingsLaundryDialog extends HTMLElement {
         window.dispatchEvent(new CustomEvent("location-changed"));
         break;
       case "operate":
-        this._call(option, "select", "select_option", { entity_id: a.ents.operating.entity_id, option });
+        const operation = operationService(a, option);
+        if (operation) this._call(option, operation.domain, operation.service, operation.data);
         break;
       case "expand":
         this._open = this._open === role ? null : role;

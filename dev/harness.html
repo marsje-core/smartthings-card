@@ -16,7 +16,7 @@ customElements.define("ha-icon", class extends HTMLElement{connectedCallback(){t
 const now=Date.now();
 function st(id,state,attrs={}){return {entity_id:id,state,attributes:attrs}}
 const S={}, E={};
-function add(dev,id,tk,state,attrs){S[id]=st(id,state,attrs);E[id]={entity_id:id,device_id:dev,platform:"smartthings",translation_key:tk}}
+function add(dev,id,tk,state,attrs={},platform="smartthings"){S[id]=st(id,state,attrs);E[id]={entity_id:id,device_id:dev,platform,translation_key:tk}}
 add("W","sensor.w_ms","washer_machine_state","run");add("W","sensor.w_js","washer_job_state","rinse");
 add("W","sensor.w_ct","completion_time",new Date(now+83*60000).toISOString());
 add("W","select.w_op","operating_state","run",{options:["run","pause","stop"]});
@@ -36,13 +36,33 @@ add("D","select.d_dt","drying_time","0",{options:["0"]});
 add("D","number.d_de","delay_end","120",{min:0,max:1440,step:1});
 add("D","switch.d_wp","wrinkle_prevent","on");add("D","switch.d_acl","auto_cycle_link","off");
 add("D","binary_sensor.d_rc","remote_control","off");
-const hass={states:S,entities:E,devices:{W:{name:"Lavatrice"},D:{name:"Asciugatrice"}},language:"it",locale:{language:"it"},
+add("L","sensor.l_ms","machine_state","active",{},"localthings");
+add("L","binary_sensor.l_active","cycle_active","on",{},"localthings");
+add("L","sensor.l_progress","progress","drumcleaning",{},"localthings");
+add("L","sensor.l_finish","finish_time",new Date(now+116*60000).toISOString(),{},"localthings");
+add("L","sensor.l_remaining","completion_minutes","116",{},"localthings");
+add("L","button.l_start","start","unknown",{},"localthings");
+add("L","button.l_pause","pause","unknown",{},"localthings");
+add("L","button.l_stop","stop","unknown",{},"localthings");
+add("L","select.l_cycle","washer_cycle","1C",{options:["1C","1D"]},"localthings");
+add("L","select.l_temp","wash_temperature","60",{options:["Cold","20","30","40","60","90"]},"localthings");
+add("L","select.l_spin","spin_speed","1200",{options:["NoSpin","400","800","1000","1200","1400"]},"localthings");
+add("L","select.l_rinse","rinse_cycles","2",{options:["0","1","2","3","4","5"]},"localthings");
+add("L","number.l_delay","delay_start_hours","0",{min:0,max:24,step:1,unit_of_measurement:"h"},"localthings");
+add("L","switch.l_bubble","bubble_soak","off",{},"localthings");
+add("L","select.l_detergent","detergent_quantity","01",{options:["00","01","02","03"]},"localthings");
+add("L","select.l_softener","softener_quantity","01",{options:["00","01","02","03"]},"localthings");
+add("L","binary_sensor.l_remote","remote_control","on",{},"localthings");
+const hass={states:S,entities:E,devices:{W:{name:"Washer"},D:{name:"Dryer"},L:{name:"WW11DB8B95GBU3"}},language:"en",locale:{language:"en"},
  formatEntityState:(s,v)=>(v??s.state).replace(/_/g," "),
  callService:async(d,sv,data)=>{console.log("CALL",d,sv,JSON.stringify(data)); if(data.entity_id==="select.d_op") throw new Error("Can only be updated when remote control is enabled");
    const s=S[data.entity_id]; if(sv==="select_option") s.state=data.option; if(sv==="set_value") s.state=String(data.value); if(sv==="toggle") s.state=s.state==="on"?"off":"on";
    if(data.entity_id==="select.w_op") S["sensor.w_ms"].state=data.option;
+   if(sv==="press" && data.entity_id==="button.l_pause"){S["sensor.l_ms"].state="pause";S["binary_sensor.l_active"].state="off";}
+   if(sv==="press" && data.entity_id==="button.l_start"){S["sensor.l_ms"].state="active";S["binary_sensor.l_active"].state="on";}
+   if(sv==="press" && data.entity_id==="button.l_stop"){S["sensor.l_ms"].state="idle";S["binary_sensor.l_active"].state="off";}
    const h={...hass,states:{...S}}; window.cards.forEach(c=>c.hass=h);}};
 await customElements.whenDefined("smartthings-laundry-card");
 window.cards=[];
-for (const [el,dev] of [["w","W"],["d","D"]]) {const c=document.createElement("smartthings-laundry-card");c.setConfig({device_id:dev});c.hass=hass;document.getElementById(el).appendChild(c);cards.push(c);}
+for (const [el,dev] of [["w","W"],["d","D"],["w2","L"]]) {const c=document.createElement("smartthings-laundry-card");c.setConfig({device_id:dev});c.hass=hass;document.getElementById(el).appendChild(c);cards.push(c);}
 </script></body></html>

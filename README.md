@@ -1,6 +1,6 @@
-# SmartThings laundry card
+# Samsung laundry card
 
-Lovelace card for the Samsung washer and dryer (`DA_WM_TP2_20_COMMON`) exposed by the Home Assistant SmartThings integration. The dashboard shows a tile. A tap opens a more-info style dialog with the essential controls:
+Lovelace card for Samsung washers and dryers exposed by the Home Assistant SmartThings or LocalThings integration, including the `DA_WM_TP1_21_COMMON` washer. The dashboard shows a tile. A tap opens a more-info style dialog with the essential controls:
 
 - remaining time, end time and cycle phases
 - start, pause, resume and stop
@@ -8,7 +8,7 @@ Lovelace card for the Samsung washer and dryer (`DA_WM_TP2_20_COMMON`) exposed b
 - the options of the selected cycle: temperature, spin, rinses, dry level, drying time, delay end, Bubble Soak, wrinkle prevent, Auto Cycle Link, dispense amounts
 - detergent and softener levels
 
-The card finds the entities of the device by `translation_key`, so it does not depend on entity IDs. It needs the SmartThings integration with the washer and dryer entities (cycle selects, delay end, dispense amounts). The accent color is the theme `--primary-color`.
+The card finds the entities of the device by `translation_key`, so it does not depend on entity IDs. LocalThings cycle actions use its start, pause, and stop buttons; options are limited to entities exposed by the appliance. The accent color is the theme `--primary-color`.
 
 ![Washer and dryer tiles](https://raw.githubusercontent.com/CappyT/smartthings-card/main/images/tiles.png)
 
