@@ -1,5 +1,7 @@
 Thank you to [CappyT (Gabriele Turelli)](https://github.com/CappyT) for creating and sharing the original card!
 
+This is my first attempt at forking a card. I only have a washing machine, and I tested it with a Samsung WW11DB8B95GBU3.
+
 # Samsung laundry card
 
 Lovelace card for Samsung washers and dryers exposed by the Home Assistant SmartThings or LocalThings integration, including the `DA_WM_TP1_21_COMMON` washer. The dashboard shows a tile. A tap opens a more-info style dialog with the essential controls:
