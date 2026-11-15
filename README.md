@@ -1,3 +1,5 @@
+Thank you to [CappyT (Gabriele Turelli)](https://github.com/CappyT) for creating and sharing the original card!
+
 # Samsung laundry card
 
 Lovelace card for Samsung washers and dryers exposed by the Home Assistant SmartThings or LocalThings integration, including the `DA_WM_TP1_21_COMMON` washer. The dashboard shows a tile. A tap opens a more-info style dialog with the essential controls:
@@ -8,7 +10,7 @@ Lovelace card for Samsung washers and dryers exposed by the Home Assistant Smart
 - the options of the selected cycle: temperature, spin, rinses, dry level, drying time, delay end, Bubble Soak, wrinkle prevent, Auto Cycle Link, dispense amounts
 - detergent and softener levels
 
-The original card was created by [CappyT (Gabriele Turelli)](https://github.com/CappyT). Thank you for creating and sharing it! This fork adds support for another Samsung washer and firmware variant (`DA_WM_TP1_21_COMMON`), including through LocalThings.
+This [fork](https://github.com/marsje-core/smartthings-card) adds support for another Samsung washer and firmware variant (`DA_WM_TP1_21_COMMON`), including through LocalThings. I also provide Dutch translations.
 
 The card finds the entities of the device by `translation_key`, so it does not depend on entity IDs. LocalThings cycle actions use its start, pause, and stop buttons; options are limited to entities exposed by the appliance. The accent color is the theme `--primary-color`.
 
@@ -16,17 +18,17 @@ When the washer reports drum cleaning as its current progress, the card displays
 
 If the same appliance is registered through both integrations, choose the LocalThings device in the card configuration to see its locally exposed options. Selecting the SmartThings device only shows its SmartThings entities.
 
-![Washer and dryer tiles](https://raw.githubusercontent.com/CappyT/smartthings-card/main/images/tiles.png)
+![Washer and dryer tiles](https://raw.githubusercontent.com/marsje-core/smartthings-card/main/images/tiles.png)
 
-![Washer dialog](https://raw.githubusercontent.com/CappyT/smartthings-card/main/images/dialog.png)
+![Washer dialog](https://raw.githubusercontent.com/marsje-core/smartthings-card/main/images/dialog.png)
 
 ## Install
 
 ### HACS
 
-[![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=CappyT&repository=smartthings-card&category=plugin)
+[![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=marsje-core&repository=smartthings-card&category=plugin)
 
-1. Open the link above, or search "SmartThings laundry card" in HACS. If HACS does not find it, add `https://github.com/CappyT/smartthings-card` as a custom repository of type Dashboard.
+1. Open the link above, or search "SmartThings laundry card" in HACS. If HACS does not find it, add `https://github.com/marsje-core/smartthings-card` as a custom repository of type Dashboard.
 2. Download the card. HACS adds the dashboard resource.
 
 ### Manual
