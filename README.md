@@ -7,7 +7,7 @@ Lovelace card for Samsung washers and dryers exposed by the Home Assistant Smart
 - remaining time, end time and cycle phases
 - start, pause, resume and stop
 - cycle selection
-- the options of the selected cycle: temperature, spin, rinses, dry level, drying time, delay end, Bubble Soak, wrinkle prevent, Auto Cycle Link, dispense amounts
+- the options of the selected cycle: temperature, spin, rinses, dry level, drying time, delay end, Bubble Soak, wrinkle prevent, Auto Cycle Link, automatic detergent and softener dosing
 - detergent and softener levels
 
 This [fork](https://github.com/marsje-core/smartthings-card) adds support for another Samsung washer and firmware variant (`DA_WM_TP1_21_COMMON`), including through LocalThings. I also provide Dutch translations.
