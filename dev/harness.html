@@ -63,7 +63,7 @@ add("O","sensor.o_ms","machine_state","active",{},"localthings");
 add("O","sensor.o_state","oven_state","preheat",{},"localthings");
 add("O","binary_sensor.o_active","cycle_active","on",{},"localthings");
 add("O","binary_sensor.o_door","door_open","off",{},"localthings");
-add("O","select.o_mode","cooking_mode","Convection",{options:["NoOperation","Convection","FanConventional","LargeGrill","FanGrill","AirFryer","Deodorization","KeepWarm","MicroWave","MicroWaveGrill","SteamClean"]},"localthings");
+add("O","select.o_mode","cooking_mode","convection",{options:["no_operation","autocook","convection","Fan Conventional","Large Grill","Fan Grill","micro_wave_grill","micro_wave_convection","air_fryer","micro_wave","deodorization","keep_warm","Steam Clean"]},"localthings");
 add("O","number.o_temp","setpoint","160",{min:40,max:230,step:5,unit_of_measurement:"°C"},"localthings");
 add("O","number.o_time","cook_time","60",{min:1,max:600,step:1,unit_of_measurement:"min"},"localthings");
 add("O","sensor.o_current","current_temp_c","25",{unit_of_measurement:"°C"},"localthings");

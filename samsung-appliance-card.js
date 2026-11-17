@@ -256,6 +256,10 @@ const REMOTE_STARTABLE_OVEN_MODES = new Set([
   "keepwarm",
 ]);
 
+function normalizeMode(option) {
+  return String(option).toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 function hasRemoteOvenModeRestrictions(device) {
   return [device?.model, device?.model_id].some((value) =>
     typeof value === "string" &&
@@ -265,7 +269,7 @@ function hasRemoteOvenModeRestrictions(device) {
 
 function canSelectOption(a, role, option) {
   return role !== "cycle" || !a.restrictRemoteOvenModes ||
-    REMOTE_STARTABLE_OVEN_MODES.has(String(option).toLowerCase());
+    REMOTE_STARTABLE_OVEN_MODES.has(normalizeMode(option));
 }
 
 // Snapshot of the appliance: role -> state object, plus derived status.
