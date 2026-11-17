@@ -245,6 +245,29 @@ const CARD_NAMES = {
   en: "Samsung appliance card",
 };
 
+const RESTRICTED_OVEN_MODELS = ["TP1X_DA-KS-OVEN-01061", "NQ5B4553FBS/U1"];
+const REMOTE_STARTABLE_OVEN_MODES = new Set([
+  "convection",
+  "fanconventional",
+  "largegrill",
+  "fangrill",
+  "airfryer",
+  "deodorization",
+  "keepwarm",
+]);
+
+function hasRemoteOvenModeRestrictions(device) {
+  return [device?.model, device?.model_id].some((value) =>
+    typeof value === "string" &&
+    RESTRICTED_OVEN_MODELS.some((model) => value.toUpperCase().startsWith(model)),
+  );
+}
+
+function canSelectOption(a, role, option) {
+  return role !== "cycle" || !a.restrictRemoteOvenModes ||
+    REMOTE_STARTABLE_OVEN_MODES.has(String(option).toLowerCase());
+}
+
 // Snapshot of the appliance: role -> state object, plus derived status.
 function readAppliance(hass, config) {
   const deviceId = resolveDevice(hass, config);
@@ -313,6 +336,7 @@ function readAppliance(hass, config) {
   return {
     deviceId, device, ents, kind, lang, t, machine, job, available, running, paused, active,
     delayed, phases, phaseIndex, finished, remainingMin, endsAt, status,
+    restrictRemoteOvenModes: kind === "oven" && hasRemoteOvenModeRestrictions(device),
     remoteOn: ents.remote ? ents.remote.state === "on" : true,
     name: device?.name_by_user || device?.name || t(kind),
   };
@@ -685,8 +709,10 @@ class SamsungApplianceDialog extends HTMLElement {
   _pills(a, role, s, options, wide = false) {
     return `<div class="pills ${wide ? "wide" : ""}">${options
       .map(
-        (o) =>
-          `<button class="pill ${o === s.state ? "sel" : ""}${this._busy === `${role}:${o}` ? " busy" : ""}" data-action="select" data-role="${role}" data-option="${esc(o)}">${esc(optionLabel(this._hass, role, s, o))}</button>`,
+        (o) => {
+          const disabled = !canSelectOption(a, role, o);
+          return `<button class="pill ${o === s.state ? "sel" : ""}${this._busy === `${role}:${o}` ? " busy" : ""}" data-action="select" data-role="${role}" data-option="${esc(o)}" ${disabled ? "disabled" : ""}>${esc(optionLabel(this._hass, role, s, o))}</button>`;
+        },
       )
       .join("")}</div>`;
   }
@@ -923,6 +949,8 @@ const DIALOG_CSS = `
   .pill { padding: 8px 14px; min-height: 36px; border-radius: 18px; font-size: 13px; text-align: center;
     border: 1px solid var(--divider-color, rgba(0,0,0,.12)); }
   .pill:hover { background: color-mix(in srgb, var(--primary-text-color) 6%, transparent); }
+  .pill:disabled { opacity: .48; cursor: not-allowed; }
+  .pill:disabled:hover { background: none; }
   .pill.sel { background: color-mix(in srgb, var(--accent) 20%, transparent); border-color: var(--accent); color: var(--primary-text-color); font-weight: 500; }
 
   .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
