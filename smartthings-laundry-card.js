@@ -301,6 +301,15 @@ function optionLabel(hass, role, stateObj, option) {
   return label;
 }
 
+async function callService(hass, domain, service, data) {
+  try {
+    await hass.callService(domain, service, data);
+    return null;
+  } catch (err) {
+    return err?.message || String(err);
+  }
+}
+
 const SHARED_CSS = `
   :host { --accent: var(--primary-color); }
   ha-icon { --mdc-icon-size: 24px; display: inline-flex; }
@@ -364,7 +373,7 @@ class SmartThingsLaundryCard extends HTMLElement {
     if (!this._config) return;
     const a = readAppliance(this._hass, this._config);
     const sig = JSON.stringify([
-      a.name, a.status, a.remainingMin, a.phases.map((p) => p.key), a.phaseIndex, a.active, a.running, a.remoteOn, a.available, this._config.name,
+      a.name, a.status, a.remainingMin, a.phases.map((p) => p.key), a.phaseIndex, a.active, a.running, a.remoteOn, a.available, this._config.name, this._error,
     ]);
     if (sig === this._sig) return;
     this._sig = sig;
@@ -373,7 +382,7 @@ class SmartThingsLaundryCard extends HTMLElement {
       this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
     }
     const name = this._config.name || a.name;
-    const secondary = a.active && a.remainingMin != null ? `${a.status} · ${formatDuration(a.remainingMin)}` : a.status;
+    const secondary = this._error || (a.active && a.remainingMin != null ? `${a.status} · ${formatDuration(a.remainingMin)}` : a.status);
     const canToggle = a.available && a.remoteOn && a.active && a.canOperate;
     const segments = a.phases
       .map((_, i) => `<span class="seg ${i < a.phaseIndex ? "done" : i === a.phaseIndex ? "now" : ""}"></span>`)
@@ -403,7 +412,7 @@ class SmartThingsLaundryCard extends HTMLElement {
           <div class="icon ${a.active ? "on" : ""} ${a.running ? "running" : ""}"><ha-icon icon="${ICON[a.kind]}"></ha-icon></div>
           <div class="info">
             <div class="name">${esc(name)}</div>
-            <div class="state">${esc(secondary)}</div>
+            <div class="state"${this._error ? ` title="${esc(this._error)}" role="status" aria-live="polite"` : ""}>${esc(secondary)}</div>
             <div class="bar">${segments}</div>
           </div>
           ${canToggle ? `<button class="action" data-action="toggle" title="${esc(a.running ? a.t("pause") : a.t("resume"))}"><ha-icon icon="${a.running ? "mdi:pause" : "mdi:play"}"></ha-icon></button>` : ""}
@@ -417,10 +426,19 @@ class SmartThingsLaundryCard extends HTMLElement {
       ev.stopPropagation();
       const a = readAppliance(this._hass, this._config);
       const operation = operationService(a, a.running ? "pause" : "run");
-      if (operation) this._hass.callService(operation.domain, operation.service, operation.data);
+      if (operation) this._call(operation.domain, operation.service, operation.data);
       return;
     }
     this._openDialog();
+  }
+
+  async _call(domain, service, data) {
+    this._error = null;
+    this._sig = null;
+    this._render();
+    this._error = await callService(this._hass, domain, service, data);
+    this._sig = null;
+    this._render();
   }
 
   _openDialog() {
@@ -521,7 +539,7 @@ class SmartThingsLaundryDialog extends HTMLElement {
           </div>
           ${a.available && !a.remoteOn ? `<div class="banner"><ha-icon icon="mdi:remote-off"></ha-icon><span>${esc(t("remote_off"))}</span></div>` : ""}
           ${a.ents.childLock?.state === "on" ? `<div class="banner soft"><ha-icon icon="mdi:lock"></ha-icon><span>${esc(t("child_lock"))}</span></div>` : ""}
-          ${this._error ? `<div class="banner error"><ha-icon icon="mdi:alert-circle-outline"></ha-icon><span>${esc(this._error)}</span></div>` : ""}
+          ${this._error ? `<div class="banner"><ha-icon icon="mdi:alert-circle-outline"></ha-icon><span>${esc(this._error)}</span></div>` : ""}
           ${a.ents.cycle ? this._programSection(a, locked || !a.remoteOn) : ""}
           ${this._optionsSection(a, locked)}
           ${this._suppliesSection(a)}
@@ -698,11 +716,7 @@ class SmartThingsLaundryDialog extends HTMLElement {
     this._busy = busyKey;
     this._error = null;
     this._render();
-    try {
-      await this._hass.callService(domain, service, data);
-    } catch (err) {
-      this._error = err?.message || String(err);
-    }
+    this._error = await callService(this._hass, domain, service, data);
     this._busy = null;
     this._render(true);
   }
@@ -801,8 +815,6 @@ const DIALOG_CSS = `
   .banner ha-icon { color: var(--warning-color, #ffa600); flex: none; --mdc-icon-size: 20px; }
   .banner.soft { background: color-mix(in srgb, var(--secondary-text-color) 10%, transparent); }
   .banner.soft ha-icon { color: var(--secondary-text-color); }
-  .banner.error { background: color-mix(in srgb, var(--error-color, #db4437) 14%, transparent); }
-  .banner.error ha-icon { color: var(--error-color, #db4437); }
 
   .section { margin-top: 16px; }
   .section-title { font-size: 14px; font-weight: 500; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
