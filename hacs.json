@@ -1,5 +1,5 @@
 {
-  "name": "SmartThings laundry card",
-  "filename": "smartthings-laundry-card.js",
+  "name": "Samsung appliance card",
+  "filename": "samsung-appliance-card.js",
   "render_readme": true
 }

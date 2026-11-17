@@ -2,10 +2,10 @@
 
 ## Project architecture
 
-- This is a standalone Home Assistant Lovelace custom card. The shipped code is `smartthings-laundry-card.js`; there is no compile or bundle step. It registers the dashboard card and its companion dialog as custom elements.
+- This is a standalone Home Assistant Lovelace custom card. The shipped code is `samsung-appliance-card.js`; there is no compile or bundle step. It registers the dashboard card and its companion dialog as custom elements.
 - The card resolves the configured appliance, then `readAppliance()` builds a normalized snapshot of its entities and derived status. Entity IDs vary by installation, so matching is based on the configured device ID, supported integration platform (`smartthings` or `localthings`), and entity `translation_key`.
 - The tile and dialog render from that snapshot. The dialog maps user actions to Home Assistant services: SmartThings operating-state selection, LocalThings buttons, and the relevant select/number/switch services for options.
-- `dev/harness.html` supplies mocked Home Assistant state, entity, device, and service APIs for washer, dryer, and LocalThings examples. Keep these fixtures representative when changing entity discovery, rendering, or service behavior.
+- `dev/harness.html` supplies mocked Home Assistant state, entity, device, and service APIs for washer, dryer, and oven examples. Keep these fixtures representative when changing entity discovery, rendering, or service behavior.
 - `README.md` is the source for installation, configuration, integration limitations, and release workflow details. The release workflow calculates versions from `main` history and substitutes the version in the published JavaScript asset.
 
 ## Build, test, and lint
