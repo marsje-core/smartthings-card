@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 /*
- * Samsung washer and dryer exposed by the SmartThings or LocalThings
+ * Samsung washer, dryer, and oven exposed by the SmartThings or LocalThings
  * integration. Tile on the dashboard, more-info style dialog with the
  * essential controls.
  *
@@ -21,8 +21,14 @@ const ROLES = {
   "sensor.progress": "jobState",
   "sensor.completion_time": "completion",
   "sensor.finish_time": "finishTime",
+  "sensor.cook_finish_time": "finishTime",
   "sensor.completion_minutes": "completionMinutes",
+  "sensor.cook_time_remaining": "cookTimeRemaining",
+  "sensor.current_temp_c": "currentTemperature",
+  "sensor.oven_state": "jobState",
+  "sensor.cavity_state": "jobState",
   "binary_sensor.cycle_active": "cycleActive",
+  "binary_sensor.door_open": "doorOpen",
   "sensor.detergent_level": "detergent",
   "sensor.softener_level": "softener",
   "switch.auto_detergent": "autoDetergent",
@@ -31,8 +37,14 @@ const ROLES = {
   "button.start": "start",
   "button.pause": "pause",
   "button.stop": "stop",
+  "button.start_cooking": "startCooking",
   "select.washer_cycle": "cycle",
   "select.dryer_cycle": "cycle",
+  "select.oven_mode": "cycle",
+  "select.cooking_mode": "cycle",
+  "number.oven_setpoint": "ovenTemperature",
+  "number.setpoint": "ovenTemperature",
+  "number.cook_time": "cookTime",
   "select.water_temperature": "temperature",
   "select.wash_temperature": "temperature",
   "select.spin_level": "spin",
@@ -54,6 +66,11 @@ const ROLES = {
   "switch.intensive": "intensive",
   "switch.wrinkle_prevent": "wrinklePrevent",
   "switch.auto_cycle_link": "autoCycleLink",
+  "switch.lamp": "lamp",
+  "switch.sound": "sound",
+  "switch.fast_preheat": "fastPreheat",
+  "switch.natural_steam": "naturalSteam",
+  "switch.energy_saving": "energySaving",
   "binary_sensor.remote_control": "remote",
   "binary_sensor.child_lock": "childLock",
 };
@@ -76,7 +93,7 @@ const PHASES = {
 
 const I18N = {
   it: {
-    washer: "Lavatrice", dryer: "Asciugatrice",
+    washer: "Lavatrice", dryer: "Asciugatrice", oven: "Forno",
     wash: "Lavaggio", rinse: "Risciacquo", spin: "Centrifuga", drumClean: "Pulizia cestello",
     dry: "Asciugatura", cool: "Raffreddamento", wrinkle: "Antipiega",
     running: "In funzione", paused: "In pausa", ready: "Pronta", finished: "Completato",
@@ -86,6 +103,10 @@ const I18N = {
     remote_off: "Controllo remoto disattivato. Attivalo sull'apparecchio per comandarlo.",
     child_lock: "Blocco bambini attivo",
     program: "Programma", options: "Opzioni", supplies: "Detersivi",
+    cookingMode: "Modalità di cottura", cookTime: "Durata cottura",
+    startCooking: "Avvia cottura", currentTemperature: "Temperatura attuale",
+    readings: "Rilevazioni", door: "Porta", open: "Aperta", closed: "Chiusa",
+    remaining: "Tempo rimanente",
     locked_running: "Non modificabile durante il ciclo",
     temperature: "Temperatura", spinLevel: "Centrifuga", rinseCount: "Risciacqui",
     dryLevel: "Grado asciugatura", dryingTime: "Durata",
@@ -97,10 +118,12 @@ const I18N = {
     detergentAmount: "Dose detersivo", softenerAmount: "Dose ammorbidente",
     detergentHardness: "Durezza dell'acqua", softenerConcentration: "Concentrazione ammorbidente",
     on: "Attivo",
+    lamp: "Luce", sound: "Suono", fastPreheat: "Preriscaldamento rapido",
+    naturalSteam: "Vapore naturale", energySaving: "Risparmio energetico",
     device: "Impostazioni dispositivo", close: "Chiudi",
   },
   en: {
-    washer: "Washer", dryer: "Dryer",
+    washer: "Washer", dryer: "Dryer", oven: "Oven",
     wash: "Wash", rinse: "Rinse", spin: "Spin", drumClean: "Drum cleaning",
     dry: "Drying", cool: "Cooling", wrinkle: "Wrinkle prevent",
     running: "Running", paused: "Paused", ready: "Ready", finished: "Finished",
@@ -110,6 +133,10 @@ const I18N = {
     remote_off: "Remote control is off. Enable it on the appliance to control it.",
     child_lock: "Child lock on",
     program: "Program", options: "Options", supplies: "Supplies",
+    cookingMode: "Cooking mode", cookTime: "Cook time",
+    startCooking: "Start cooking", currentTemperature: "Current temperature",
+    readings: "Readings", door: "Door", open: "Open", closed: "Closed",
+    remaining: "Time remaining",
     locked_running: "Locked while a cycle runs",
     temperature: "Temperature", spinLevel: "Spin", rinseCount: "Rinses",
     dryLevel: "Dry level", dryingTime: "Drying time",
@@ -121,10 +148,12 @@ const I18N = {
     detergentAmount: "Detergent amount", softenerAmount: "Softener amount",
     detergentHardness: "Water hardness", softenerConcentration: "Softener concentration",
     on: "On",
+    lamp: "Lamp", sound: "Sound", fastPreheat: "Fast preheat",
+    naturalSteam: "Natural steam", energySaving: "Energy saving",
     device: "Device settings", close: "Close",
   },
   nl: {
-    washer: "Wasmachine", dryer: "Droger",
+    washer: "Wasmachine", dryer: "Droger", oven: "Oven",
     wash: "Wassen", rinse: "Spoelen", spin: "Centrifugeren", drumClean: "Trommelreiniging",
     dry: "Drogen", cool: "Afkoelen", wrinkle: "Kreukpreventie",
     running: "Bezig", paused: "Gepauzeerd", ready: "Gereed", finished: "Klaar",
@@ -134,6 +163,10 @@ const I18N = {
     remote_off: "Bediening op afstand is uitgeschakeld. Schakel deze in op het apparaat om het te bedienen.",
     child_lock: "Kinderslot is ingeschakeld",
     program: "Programma", options: "Opties", supplies: "Wasmiddelen",
+    cookingMode: "Bereidingsmodus", cookTime: "Bereidingstijd",
+    startCooking: "Bereiding starten", currentTemperature: "Huidige temperatuur",
+    readings: "Metingen", door: "Deur", open: "Open", closed: "Gesloten",
+    remaining: "Resterende tijd",
     locked_running: "Niet aanpasbaar tijdens een programma",
     temperature: "Temperatuur", spinLevel: "Centrifugeren", rinseCount: "Spoelbeurten",
     dryLevel: "Droogtegraad", dryingTime: "Droogtijd",
@@ -145,6 +178,8 @@ const I18N = {
     detergentAmount: "Hoeveelheid wasmiddel", softenerAmount: "Hoeveelheid wasverzachter",
     detergentHardness: "Waterhardheid", softenerConcentration: "Concentratie wasverzachter",
     on: "Aan",
+    lamp: "Lamp", sound: "Geluid", fastPreheat: "Snel voorverwarmen",
+    naturalSteam: "Natuurlijke stoom", energySaving: "Energiebesparing",
     device: "Apparaatinstellingen", close: "Sluiten",
   },
 };
@@ -173,9 +208,18 @@ const OPTION_TILES = {
     { role: "wrinklePrevent", icon: "mdi:tshirt-crew-outline", label: "wrinklePrevent" },
     { role: "autoCycleLink", icon: "mdi:link-variant", label: "autoCycleLink" },
   ],
+  oven: [
+    { role: "ovenTemperature", icon: "mdi:thermometer-chevron-up", label: "temperature" },
+    { role: "cookTime", icon: "mdi:timer-outline", label: "cookTime" },
+    { role: "lamp", icon: "mdi:track-light", label: "lamp" },
+    { role: "sound", icon: "mdi:volume-high", label: "sound" },
+    { role: "fastPreheat", icon: "mdi:fire", label: "fastPreheat" },
+    { role: "naturalSteam", icon: "mdi:kettle-steam", label: "naturalSteam" },
+    { role: "energySaving", icon: "mdi:leaf", label: "energySaving" },
+  ],
 };
 
-const ICON = { washer: "mdi:washing-machine", dryer: "mdi:tumble-dryer" };
+const ICON = { washer: "mdi:washing-machine", dryer: "mdi:tumble-dryer", oven: "mdi:stove" };
 const DELAY_STEP = 60;
 
 const esc = (s) =>
@@ -192,9 +236,9 @@ function homeAssistantLanguage(hass = document.querySelector("home-assistant")?.
 }
 
 const CARD_NAMES = {
-  it: "Lavatrice e asciugatrice (SmartThings)",
-  nl: "Wasmachine en droger (SmartThings)",
-  en: "Washer and dryer (SmartThings)",
+  it: "Lavatrice, asciugatrice e forno (SmartThings)",
+  nl: "Wasmachine, droger en oven (SmartThings)",
+  en: "Washer, dryer, and oven (SmartThings)",
 };
 
 // Snapshot of the appliance: role -> state object, plus derived status.
@@ -214,9 +258,10 @@ function readAppliance(hass, config) {
   }
   const machineEntry = ents.machineState && hass.entities[ents.machineState.entity_id];
   const cycleEntry = ents.cycle && hass.entities[ents.cycle.entity_id];
-  const kind = [machineEntry?.translation_key, cycleEntry?.translation_key].some((key) => key?.includes("dryer"))
-    ? "dryer"
-    : "washer";
+  const translationKeys = [machineEntry?.translation_key, cycleEntry?.translation_key];
+  const isOven = translationKeys.some((key) => ["oven_mode", "cooking_mode"].includes(key)) ||
+    Boolean(ents.ovenTemperature || ents.cookTime || ents.startCooking || ents.currentTemperature);
+  const kind = isOven ? "oven" : translationKeys.some((key) => key?.includes("dryer")) ? "dryer" : "washer";
   const lang = homeAssistantLanguage(hass);
   const t = (k) => I18N[lang][k] ?? I18N.en[k] ?? k;
 
@@ -230,15 +275,17 @@ function readAppliance(hass, config) {
   const paused = machine === "pause";
   const active = cycleActive === "on" || running || paused;
   const delayed = ["delay_wash", "delaywash"].includes(job);
-  const phases = kind === "washer" && PHASES.drumClean[0].states.includes(job) ? PHASES.drumClean : PHASES[kind];
+  const phases = kind === "oven" ? [] :
+    kind === "washer" && PHASES.drumClean[0].states.includes(job) ? PHASES.drumClean : PHASES[kind];
   const phaseIndex = active ? phases.findIndex((p) => p.states.includes(job)) : -1;
   const finished = !active && (job === "finish" || job === "finished");
 
   let remainingMin = null;
   let endsAt = null;
-  const minutes = Number(ents.completionMinutes?.state);
-  if (active && Number.isFinite(minutes) && !["unknown", "unavailable"].includes(ents.completionMinutes?.state)) {
-    remainingMin = Math.max(0, Math.round(minutes));
+  const remainingEntity = ents.completionMinutes || ents.cookTimeRemaining;
+  const remainingValue = Number(remainingEntity?.state);
+  if (active && Number.isFinite(remainingValue) && !["unknown", "unavailable"].includes(remainingEntity?.state)) {
+    remainingMin = Math.max(0, Math.round(ents.completionMinutes ? remainingValue : remainingValue / 60));
   }
   const completion = (ents.finishTime || ents.completion)?.state;
   if (active && completion && !["unknown", "unavailable"].includes(completion)) {
@@ -261,7 +308,6 @@ function readAppliance(hass, config) {
     deviceId, device, ents, kind, lang, t, machine, job, available, running, paused, active,
     delayed, phases, phaseIndex, finished, remainingMin, endsAt, status,
     remoteOn: ents.remote ? ents.remote.state === "on" : true,
-    canOperate: Boolean(ents.operating || (ents.start && ents.pause)),
     name: device?.name_by_user || device?.name || t(kind),
   };
 }
@@ -274,7 +320,12 @@ function operationService(a, option) {
       data: { entity_id: a.ents.operating.entity_id, option },
     };
   }
-  const button = a.ents[option === "run" ? "start" : option];
+  let buttonRole = option;
+  if (option === "run") {
+    buttonRole = a.kind === "oven" && !a.paused ? "startCooking" : "start";
+    if (a.kind === "oven" && !a.paused && !a.ents[buttonRole]) buttonRole = "start";
+  }
+  const button = a.ents[buttonRole];
   return button
     ? { domain: "button", service: "press", data: { entity_id: button.entity_id } }
     : null;
@@ -383,7 +434,8 @@ class SmartThingsLaundryCard extends HTMLElement {
     }
     const name = this._config.name || a.name;
     const secondary = this._error || (a.active && a.remainingMin != null ? `${a.status} · ${formatDuration(a.remainingMin)}` : a.status);
-    const canToggle = a.available && a.remoteOn && a.active && a.canOperate;
+    const canToggle = a.available && a.remoteOn && a.active &&
+      Boolean(operationService(a, a.running ? "pause" : "run"));
     const segments = a.phases
       .map((_, i) => `<span class="seg ${i < a.phaseIndex ? "done" : i === a.phaseIndex ? "now" : ""}"></span>`)
       .join("");
@@ -521,7 +573,7 @@ class SmartThingsLaundryDialog extends HTMLElement {
   _template(a, name) {
     const { t } = a;
     const locked = a.active || !a.available;
-    const ctlDisabled = !a.available || !a.remoteOn || !a.canOperate;
+    const ctlDisabled = !a.available || !a.remoteOn;
     return `
         <div class="header">
           <button class="icon-btn" data-action="close" title="${esc(t("close"))}"><ha-icon icon="mdi:close"></ha-icon></button>
@@ -533,7 +585,7 @@ class SmartThingsLaundryDialog extends HTMLElement {
         </div>
         <div class="content">
           ${this._hero(a)}
-          ${a.active ? this._stepper(a) : ""}
+          ${a.active && a.phases.length ? this._stepper(a) : ""}
           <div class="controls">
             ${this._controlButtons(a, ctlDisabled)}
           </div>
@@ -542,6 +594,7 @@ class SmartThingsLaundryDialog extends HTMLElement {
           ${this._error ? `<div class="banner"><ha-icon icon="mdi:alert-circle-outline"></ha-icon><span>${esc(this._error)}</span></div>` : ""}
           ${a.ents.cycle ? this._programSection(a, locked || !a.remoteOn) : ""}
           ${this._optionsSection(a, locked)}
+          ${this._ovenReadingsSection(a)}
           ${this._suppliesSection(a)}
         </div>`;
   }
@@ -552,7 +605,7 @@ class SmartThingsLaundryDialog extends HTMLElement {
     const circ = 2 * Math.PI * r;
     const n = a.phases.length;
     const gap = 10;
-    const segLen = circ / n - gap;
+    const segLen = n ? circ / n - gap : 0;
     const arcs = a.phases
       .map((_, i) => {
         const cls = !a.active ? "" : i < a.phaseIndex ? "done" : i === a.phaseIndex ? "now" : "";
@@ -594,12 +647,14 @@ class SmartThingsLaundryDialog extends HTMLElement {
     const busy = (k) => (this._busy === k ? " busy" : "");
     const main = a.running
       ? { opt: "pause", icon: "mdi:pause", label: t("pause") }
-      : { opt: "run", icon: "mdi:play", label: a.paused ? t("resume") : t("start") };
+      : { opt: "run", icon: "mdi:play", label: a.paused ? t("resume") : a.kind === "oven" ? t("startCooking") : t("start") };
+    const mainDisabled = disabled || !operationService(a, main.opt);
+    const stopDisabled = disabled || !a.active || !operationService(a, "stop");
     return `
-      <button class="ctl primary${busy(main.opt)}" data-action="operate" data-option="${main.opt}" ${disabled ? "disabled" : ""}>
+      <button class="ctl primary${busy(main.opt)}" data-action="operate" data-option="${main.opt}" ${mainDisabled ? "disabled" : ""}>
         <ha-icon icon="${main.icon}"></ha-icon><span>${esc(main.label)}</span>
       </button>
-      <button class="ctl${busy("stop")}" data-action="operate" data-option="stop" ${disabled || !a.active || (!a.ents.operating && !a.ents.stop) ? "disabled" : ""}>
+      <button class="ctl${busy("stop")}" data-action="operate" data-option="stop" ${stopDisabled ? "disabled" : ""}>
         <ha-icon icon="mdi:stop"></ha-icon><span>${esc(t("stop"))}</span>
       </button>`;
   }
@@ -610,7 +665,7 @@ class SmartThingsLaundryDialog extends HTMLElement {
     const open = this._open === "cycle" && !locked;
     return `
       <div class="section">
-        <div class="section-title">${esc(a.t("program"))}${locked && a.active ? `<span class="hint">${esc(a.t("locked_running"))}</span>` : ""}</div>
+        <div class="section-title">${esc(a.t(a.kind === "oven" ? "cookingMode" : "program"))}${locked && a.active ? `<span class="hint">${esc(a.t("locked_running"))}</span>` : ""}</div>
         <button class="select-row ${open ? "open" : ""}" data-action="expand" data-role="cycle" ${locked ? "disabled" : ""}>
           <ha-icon icon="mdi:tune-variant"></ha-icon>
           <span class="grow">${esc(optionLabel(this._hass, "cycle", s, s.state))}</span>
@@ -638,16 +693,16 @@ class SmartThingsLaundryDialog extends HTMLElement {
         const s = a.ents[tile.role];
         const domain = s.entity_id.split(".")[0];
         const unavailable = s.state === "unavailable";
-        // Supply amounts can change mid-cycle, cycle options cannot.
-        const supplyOptions = ["detergentAmount", "detergentHardness", "softenerAmount", "softenerConcentration"];
-        const disabled = unavailable || (locked && !supplyOptions.includes(tile.role)) ||
+        // Supply amounts and oven setpoint/time can change mid-cycle.
+        const changeDuringCycle = ["detergentAmount", "detergentHardness", "softenerAmount", "softenerConcentration", "ovenTemperature", "cookTime"];
+        const disabled = unavailable || (locked && !changeDuringCycle.includes(tile.role)) ||
           (domain === "switch" && s.state !== "on" && s.attributes.course_supported === false);
         const isOn = domain === "switch" && s.state === "on";
         let value;
         if (domain === "switch") value = isOn ? a.t("on") : a.t("off");
         else if (tile.role === "delayEnd") value = Number(s.state) > 0 ? formatDuration(Number(s.state)) : a.t("off");
         else if (tile.role === "delayStart") value = Number(s.state) > 0 ? formatDuration(Number(s.state) * 60) : a.t("off");
-        else if (domain === "number") value = s.state;
+        else if (domain === "number") value = [s.state, s.attributes.unit_of_measurement].filter(Boolean).join(" ");
         else value = unavailable ? "-" : optionLabel(this._hass, tile.role, s, s.state);
         const open = this._open === tile.role && !disabled;
         if (open) panel = this._optionPanel(a, tile, s);
@@ -683,6 +738,10 @@ class SmartThingsLaundryDialog extends HTMLElement {
           ? value > 0
             ? `${a.t("in")} ${formatDuration(value * 60)}`
             : a.t("off")
+        : tile.role === "cookTime"
+          ? formatDuration(value)
+        : tile.role === "ovenTemperature"
+          ? [value, s.attributes.unit_of_measurement].filter(Boolean).join(" ")
         : String(value);
     return `
       <div class="stepper-ctl">
@@ -710,6 +769,30 @@ class SmartThingsLaundryDialog extends HTMLElement {
           })
           .join("")}</div>
       </div>`;
+  }
+
+  _ovenReadingsSection(a) {
+    if (a.kind !== "oven") return "";
+    const items = [];
+    const temperature = a.ents.currentTemperature;
+    if (temperature && !["unknown", "unavailable"].includes(temperature.state)) {
+      const value = [temperature.state, temperature.attributes.unit_of_measurement].filter(Boolean).join(" ");
+      items.push(`<div class="chip"><ha-icon icon="mdi:thermometer"></ha-icon>${esc(a.t("currentTemperature"))}: ${esc(value)}</div>`);
+    }
+    const remaining = a.ents.cookTimeRemaining;
+    if (remaining && !["unknown", "unavailable"].includes(remaining.state)) {
+      const minutes = Math.max(0, Math.round(Number(remaining.state) / 60));
+      if (Number.isFinite(minutes)) {
+        items.push(`<div class="chip"><ha-icon icon="mdi:timer-sand"></ha-icon>${esc(a.t("remaining"))}: ${esc(formatDuration(minutes))}</div>`);
+      }
+    }
+    const door = a.ents.doorOpen;
+    if (door && !["unknown", "unavailable"].includes(door.state)) {
+      const open = door.state === "on";
+      items.push(`<div class="chip"><ha-icon icon="${open ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon>${esc(a.t("door"))}: ${esc(a.t(open ? "open" : "closed"))}</div>`);
+    }
+    if (!items.length) return "";
+    return `<div class="section"><div class="section-title">${esc(a.t("readings"))}</div><div class="chips">${items.join("")}</div></div>`;
   }
 
   async _call(busyKey, domain, service, data) {
@@ -868,7 +951,7 @@ window.customCards.push({
   get name() {
     return CARD_NAMES[homeAssistantLanguage()];
   },
-  description: "Samsung washer and dryer with a more-info style control dialog.",
+  description: "Samsung washer, dryer, and oven with a more-info style control dialog.",
   preview: false,
 });
 

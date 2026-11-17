@@ -2,17 +2,20 @@ Thank you to [CappyT (Gabriele Turelli)](https://github.com/CappyT) for creating
 
 This is my first attempt at forking a card. I only have a washing machine, and I tested it with a Samsung WW11DB8B95GBU3.
 
-# Samsung laundry card
+# Samsung appliance card
 
-Lovelace card for Samsung washers and dryers exposed by the Home Assistant SmartThings or LocalThings integration, including the `DA_WM_TP1_21_COMMON` washer. The dashboard shows a tile. A tap opens a more-info style dialog with the essential controls:
+Lovelace card for Samsung washers, dryers, and ovens exposed by the Home Assistant SmartThings or LocalThings integration, including the `DA_WM_TP1_21_COMMON` washer. The dashboard shows a tile. A tap opens a more-info style dialog with the essential controls:
 
 - remaining time, end time and cycle phases
 - start, pause, resume and stop
 - cycle selection
 - the options of the selected cycle: temperature, spin, rinses, dry level, drying time, delay end, Bubble Soak, wrinkle prevent, Auto Cycle Link, automatic dosing, detergent amount and water hardness, softener amount and concentration
 - detergent and softener levels
+- oven cooking mode, temperature, cook time, and available oven options
 
-This [fork](https://github.com/marsje-core/smartthings-card) adds support for another Samsung washer and firmware variant (`DA_WM_TP1_21_COMMON`), including through LocalThings. I also provide Dutch translations.
+Oven controls appear when exposed by the appliance: mode selection, setpoint and cook-time adjustment, a dedicated Start cooking action, current temperature, remaining time, and door state. Setpoint and cook time remain adjustable while cooking when the integration exposes writable number entities.
+
+This [fork](https://github.com/marsje-core/smartthings-card) adds support for another Samsung washer and firmware variant (`DA_WM_TP1_21_COMMON`), including through LocalThings, and for LocalThings ovens and microwave/oven combinations. I also provide Dutch translations.
 
 The card finds the entities of the device by `translation_key`, so it does not depend on entity IDs. LocalThings cycle actions use its start, pause, and stop buttons; options are limited to entities exposed by the appliance. The accent color is the theme `--primary-color`.
 
@@ -42,7 +45,7 @@ If the same appliance is registered through both integrations, choose the LocalT
 
 ```yaml
 type: custom:smartthings-laundry-card
-device_id: <device id of the washer or dryer>
+device_id: <device id of the washer, dryer, or oven>
 name: Washer # optional
 ```
 
