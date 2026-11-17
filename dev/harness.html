@@ -63,7 +63,7 @@ add("O","sensor.o_ms","machine_state","active",{},"localthings");
 add("O","sensor.o_state","oven_state","preheat",{},"localthings");
 add("O","binary_sensor.o_active","cycle_active","on",{},"localthings");
 add("O","binary_sensor.o_door","door_open","off",{},"localthings");
-add("O","select.o_mode","cooking_mode","Convection",{options:["NoOperation","Convection","FanConventional","AirFryer","MicroWave","SteamClean"]},"localthings");
+add("O","select.o_mode","cooking_mode","Convection",{options:["NoOperation","Convection","FanConventional","LargeGrill","FanGrill","AirFryer","Deodorization","KeepWarm","MicroWave","MicroWaveGrill","SteamClean"]},"localthings");
 add("O","number.o_temp","setpoint","160",{min:40,max:230,step:5,unit_of_measurement:"°C"},"localthings");
 add("O","number.o_time","cook_time","60",{min:1,max:600,step:1,unit_of_measurement:"min"},"localthings");
 add("O","sensor.o_current","current_temp_c","25",{unit_of_measurement:"°C"},"localthings");
@@ -74,7 +74,7 @@ add("O","button.o_stop","stop","unknown",{},"localthings");
 add("O","light.o_lamp","lamp","on",{},"localthings");
 add("O","switch.o_sound","sound","off",{},"localthings");
 add("O","binary_sensor.o_remote","remote_control","on",{},"localthings");
-const hass={states:S,entities:E,devices:{W:{name:"Washer"},D:{name:"Dryer"},L:{name:"WW11DB8B95GBU3"},O:{name:"Samsung oven"}},language:"en",locale:{language:"en"},
+const hass={states:S,entities:E,devices:{W:{name:"Washer"},D:{name:"Dryer"},L:{name:"WW11DB8B95GBU3"},O:{name:"Samsung oven",model:"TP1X_DA-KS-OVEN-01061"}},language:"en",locale:{language:"en"},
  formatEntityState:(s,v)=>(v??s.state).replace(/_/g," "),
  callService:async(d,sv,data)=>{console.log("CALL",d,sv,JSON.stringify(data)); if(data.entity_id==="select.d_op") throw new Error("Can only be updated when remote control is enabled");
    const s=S[data.entity_id]; if(sv==="select_option") s.state=data.option; if(sv==="set_value") s.state=String(data.value); if(sv==="toggle") s.state=s.state==="on"?"off":"on";
