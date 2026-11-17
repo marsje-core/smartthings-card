@@ -1,6 +1,6 @@
 Thank you to [CappyT (Gabriele Turelli)](https://github.com/CappyT) for creating and sharing the original card. Samsung Appliance Card builds on that work with expanded washer, dryer, and oven support.
 
-This is my first attempt at forking a card. It has been tested with a Samsung [Bespoke AI QuickDrive™ 8000 Series 11 kg washing machine](https://www.samsung.com/be/washers-and-dryers/washing-machines/ww8400d-front-loading-smartthings-ai-energy-made-a-40-percent-extra-energy-efficiency-ai-ecobubble-11kg-black-ww11db8b95gbu3/) (model `WW11DB8B95GBU3`) and [NQ7000B 4 Compact Oven with Microwave Combi, 50 L](https://www.samsung.com/lb/cooking-appliances/ovens/nq7000b-4series-microwave-combi-nq5b4353fbk-u4/) (SmartThings model code `TP1X_DA-KS-OVEN-01061`).
+This is my first attempt at forking a card.
 
 # Samsung appliance card
 
@@ -22,6 +22,14 @@ The card finds the entities of the device by `translation_key`, so it does not d
 When the washer reports drum cleaning as its current progress, the card displays a single drum-cleaning phase instead of wash, rinse, and spin.
 
 If the same appliance is registered through both integrations, choose the LocalThings device in the card configuration to see its locally exposed options. Selecting the SmartThings device only shows its SmartThings entities.
+
+## Devices and testing
+
+| Appliance | Friendly name | Model or device type | Testing |
+|---|---|---|---|
+| Washer | Samsung Bespoke AI QuickDrive™ 8000 Series 11 kg washing machine | `WW11DB8B95GBU3` | Tested by me |
+| Oven | Samsung NQ7000B 4 Series 50 L compact oven with microwave combi | `NQ5B4553FBS/U1`; SmartThings code `TP1X_DA-KS-OVEN-01061` | Tested by me |
+| Washer and dryer | Samsung washer and dryer (original card type) | `DA_WM_TP2_20_COMMON` | Not tested by me; the original card was based on this type |
 
 ## Screenshots
 
