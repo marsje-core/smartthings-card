@@ -1,6 +1,6 @@
 Thank you to [CappyT (Gabriele Turelli)](https://github.com/CappyT) for creating and sharing the original card. Samsung Appliance Card builds on that work with expanded washer, dryer, and oven support.
 
-This is my first attempt at forking a card. I only have a washing machine, and I tested it with a Samsung WW11DB8B95GBU3.
+This is my first attempt at forking a card. It has been tested with a Samsung [Bespoke AI QuickDrive™ 8000 Series 11 kg washing machine](https://www.samsung.com/be/washers-and-dryers/washing-machines/ww8400d-front-loading-smartthings-ai-energy-made-a-40-percent-extra-energy-efficiency-ai-ecobubble-11kg-black-ww11db8b95gbu3/) (model `WW11DB8B95GBU3`) and [NQ7000B 4 Compact Oven with Microwave Combi, 50 L](https://www.samsung.com/lb/cooking-appliances/ovens/nq7000b-4series-microwave-combi-nq5b4353fbk-u4/) (SmartThings model code `TP1X_DA-KS-OVEN-01061`).
 
 # Samsung appliance card
 
@@ -23,9 +23,15 @@ When the washer reports drum cleaning as its current progress, the card displays
 
 If the same appliance is registered through both integrations, choose the LocalThings device in the card configuration to see its locally exposed options. Selecting the SmartThings device only shows its SmartThings entities.
 
+## Screenshots
+
 ![Washer, dryer, LocalThings washer, and oven tiles](https://raw.githubusercontent.com/marsje-core/smartthings-card/main/images/tiles.png)
 
-![Samsung oven dialog showing preheating, cooking controls, options, and readings](https://raw.githubusercontent.com/marsje-core/smartthings-card/main/images/dialog.png)
+![Washer dialog showing cycle progress, controls, options, and supply levels](https://raw.githubusercontent.com/marsje-core/smartthings-card/main/images/washer-dialog.png)
+
+![Dryer dialog showing cycle options and the remote-control status notice](https://raw.githubusercontent.com/marsje-core/smartthings-card/main/images/dryer-dialog.png)
+
+![Samsung oven dialog showing preheating, cooking controls, oven light and sound, and readings](https://raw.githubusercontent.com/marsje-core/smartthings-card/main/images/dialog.png)
 
 ## Install
 
@@ -50,22 +56,6 @@ name: Washer # optional
 ```
 
 `entity: <any entity of the appliance>` can replace `device_id`.
-
-## Releases
-
-To publish `dev`, go to **Actions → Publish dev to main** and run the workflow
-with `main` selected. It merges `dev` into `main` and starts the release
-workflow. Merge conflicts stop the workflow without updating `main`; resolve
-them on `dev` before trying again. The repository must allow GitHub Actions to
-push to `main`. Merge the workflow into `main` once first (for example through
-a one-time pull request); GitHub only offers manually triggered workflows that
-are present on the default branch.
-
-Each push to `main` publishes a GitHub release for HACS. Patch versions start at
-`v1.2.3` and increase with the first-parent commit count, so version numbers may
-skip when multiple commits are pushed together. Avoid rewriting the history of
-`main`: release versions depend on that history. The release asset's console
-version is set to the release version automatically.
 
 ## Development
 
