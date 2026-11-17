@@ -1,4 +1,4 @@
-Thank you to [CappyT (Gabriele Turelli)](https://github.com/CappyT) for creating and sharing the original card!
+Thank you to [CappyT (Gabriele Turelli)](https://github.com/CappyT) for creating and sharing the original card. Samsung Appliance Card builds on that work with expanded washer, dryer, and oven support.
 
 This is my first attempt at forking a card. I only have a washing machine, and I tested it with a Samsung WW11DB8B95GBU3.
 
@@ -13,9 +13,9 @@ Lovelace card for Samsung washers, dryers, and ovens exposed by the Home Assista
 - detergent and softener levels
 - oven cooking mode, temperature, cook time, and available oven options
 
-Oven controls appear when exposed by the appliance: mode selection, setpoint and cook-time adjustment, a dedicated Start cooking action, current temperature, remaining time, and door state. Setpoint and cook time remain adjustable while cooking when the integration exposes writable number entities.
+Oven controls appear when exposed by the appliance: mode selection, setpoint and cook-time adjustment, a dedicated Start cooking action, current temperature, remaining time, and door state. Preheating is shown as a distinct status. The oven light and sound setting can be toggled while cooking; setpoint and cook time also remain adjustable when the integration exposes writable number entities.
 
-This [fork](https://github.com/marsje-core/smartthings-card) adds support for another Samsung washer and firmware variant (`DA_WM_TP1_21_COMMON`), including through LocalThings, and for LocalThings ovens and microwave/oven combinations. I also provide Dutch translations.
+This [fork](https://github.com/marsje-core/smartthings-card) adds support for another Samsung washer and firmware variant (`DA_WM_TP1_21_COMMON`), including through LocalThings, and for LocalThings ovens and microwave/oven combinations. It also provides Dutch translations.
 
 The card finds the entities of the device by `translation_key`, so it does not depend on entity IDs. LocalThings cycle actions use its start, pause, and stop buttons; options are limited to entities exposed by the appliance. The accent color is the theme `--primary-color`.
 
@@ -23,9 +23,9 @@ When the washer reports drum cleaning as its current progress, the card displays
 
 If the same appliance is registered through both integrations, choose the LocalThings device in the card configuration to see its locally exposed options. Selecting the SmartThings device only shows its SmartThings entities.
 
-![Washer and dryer tiles](https://raw.githubusercontent.com/marsje-core/smartthings-card/main/images/tiles.png)
+![Washer, dryer, LocalThings washer, and oven tiles](https://raw.githubusercontent.com/marsje-core/smartthings-card/main/images/tiles.png)
 
-![Washer dialog](https://raw.githubusercontent.com/marsje-core/smartthings-card/main/images/dialog.png)
+![Samsung oven dialog showing preheating, cooking controls, options, and readings](https://raw.githubusercontent.com/marsje-core/smartthings-card/main/images/dialog.png)
 
 ## Install
 
@@ -33,18 +33,18 @@ If the same appliance is registered through both integrations, choose the LocalT
 
 [![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=marsje-core&repository=smartthings-card&category=plugin)
 
-1. Open the link above, or search "SmartThings laundry card" in HACS. If HACS does not find it, add `https://github.com/marsje-core/smartthings-card` as a custom repository of type Dashboard.
+1. Open the link above, or search "Samsung appliance card" in HACS. If HACS does not find it, add `https://github.com/marsje-core/smartthings-card` as a custom repository of type Dashboard.
 2. Download the card. HACS adds the dashboard resource.
 
 ### Manual
 
-1. Copy `smartthings-laundry-card.js` to `/config/www/smartthings-laundry-card/`.
-2. Add a dashboard resource: URL `/local/smartthings-laundry-card/smartthings-laundry-card.js?v=<n>`, type JavaScript module. Increase `v` after each update to bypass the frontend cache.
+1. Copy `samsung-appliance-card.js` to `/config/www/samsung-appliance-card/`.
+2. Add a dashboard resource: URL `/local/samsung-appliance-card/samsung-appliance-card.js?v=<n>`, type JavaScript module. Increase `v` after each update to bypass the frontend cache.
 
 ## Configuration
 
 ```yaml
-type: custom:smartthings-laundry-card
+type: custom:samsung-appliance-card
 device_id: <device id of the washer, dryer, or oven>
 name: Washer # optional
 ```

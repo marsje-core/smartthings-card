@@ -43,7 +43,7 @@ jobs:
             const fs = require("fs");
             const version = process.env.VERSION;
             const tag = `v${version}`;
-            const filename = "smartthings-laundry-card.js";
+            const filename = "samsung-appliance-card.js";
             const source = fs.readFileSync(filename, "utf8");
             const pattern = /^const VERSION = "[^"]+";$/m;
             if (!pattern.test(source)) throw new Error("Card version declaration not found");

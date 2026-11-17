@@ -4,7 +4,7 @@
  * integration. Tile on the dashboard, more-info style dialog with the
  * essential controls.
  *
- *   type: custom:smartthings-laundry-card
+ *   type: custom:samsung-appliance-card
  *   device_id: <device id>        # or: entity: <any entity of the appliance>
  *   name: Lavatrice               # optional
  */
@@ -71,6 +71,7 @@ const ROLES = {
   "switch.fast_preheat": "fastPreheat",
   "switch.natural_steam": "naturalSteam",
   "switch.energy_saving": "energySaving",
+  "light.lamp": "lamp",
   "binary_sensor.remote_control": "remote",
   "binary_sensor.child_lock": "childLock",
 };
@@ -99,6 +100,7 @@ const I18N = {
     running: "In funzione", paused: "In pausa", ready: "Pronta", finished: "Completato",
     delayed: "Partenza programmata", unavailable: "Non disponibile",
     start: "Avvia", resume: "Riprendi", pause: "Pausa", stop: "Stop",
+    preheating: "Preriscaldamento",
     ends_at: "Termina alle", left: "rimanenti",
     remote_off: "Controllo remoto disattivato. Attivalo sull'apparecchio per comandarlo.",
     child_lock: "Blocco bambini attivo",
@@ -118,7 +120,7 @@ const I18N = {
     detergentAmount: "Dose detersivo", softenerAmount: "Dose ammorbidente",
     detergentHardness: "Durezza dell'acqua", softenerConcentration: "Concentrazione ammorbidente",
     on: "Attivo",
-    lamp: "Luce", sound: "Suono", fastPreheat: "Preriscaldamento rapido",
+    lamp: "Luce del forno", sound: "Suono", fastPreheat: "Preriscaldamento rapido",
     naturalSteam: "Vapore naturale", energySaving: "Risparmio energetico",
     device: "Impostazioni dispositivo", close: "Chiudi",
   },
@@ -129,6 +131,7 @@ const I18N = {
     running: "Running", paused: "Paused", ready: "Ready", finished: "Finished",
     delayed: "Delayed start", unavailable: "Unavailable",
     start: "Start", resume: "Resume", pause: "Pause", stop: "Stop",
+    preheating: "Preheating",
     ends_at: "Ends at", left: "left",
     remote_off: "Remote control is off. Enable it on the appliance to control it.",
     child_lock: "Child lock on",
@@ -148,7 +151,7 @@ const I18N = {
     detergentAmount: "Detergent amount", softenerAmount: "Softener amount",
     detergentHardness: "Water hardness", softenerConcentration: "Softener concentration",
     on: "On",
-    lamp: "Lamp", sound: "Sound", fastPreheat: "Fast preheat",
+    lamp: "Oven light", sound: "Sound", fastPreheat: "Fast preheat",
     naturalSteam: "Natural steam", energySaving: "Energy saving",
     device: "Device settings", close: "Close",
   },
@@ -159,6 +162,7 @@ const I18N = {
     running: "Bezig", paused: "Gepauzeerd", ready: "Gereed", finished: "Klaar",
     delayed: "Uitgestelde start", unavailable: "Niet beschikbaar",
     start: "Starten", resume: "Hervatten", pause: "Pauzeren", stop: "Stoppen",
+    preheating: "Voorverwarmen",
     ends_at: "Klaar om", left: "resterend",
     remote_off: "Bediening op afstand is uitgeschakeld. Schakel deze in op het apparaat om het te bedienen.",
     child_lock: "Kinderslot is ingeschakeld",
@@ -178,7 +182,7 @@ const I18N = {
     detergentAmount: "Hoeveelheid wasmiddel", softenerAmount: "Hoeveelheid wasverzachter",
     detergentHardness: "Waterhardheid", softenerConcentration: "Concentratie wasverzachter",
     on: "Aan",
-    lamp: "Lamp", sound: "Geluid", fastPreheat: "Snel voorverwarmen",
+    lamp: "Ovenlamp", sound: "Geluid", fastPreheat: "Snel voorverwarmen",
     naturalSteam: "Natuurlijke stoom", energySaving: "Energiebesparing",
     device: "Apparaatinstellingen", close: "Sluiten",
   },
@@ -236,9 +240,9 @@ function homeAssistantLanguage(hass = document.querySelector("home-assistant")?.
 }
 
 const CARD_NAMES = {
-  it: "Lavatrice, asciugatrice e forno (SmartThings)",
-  nl: "Wasmachine, droger en oven (SmartThings)",
-  en: "Washer, dryer, and oven (SmartThings)",
+  it: "Elettrodomestici Samsung",
+  nl: "Samsung-apparatenkaart",
+  en: "Samsung appliance card",
 };
 
 // Snapshot of the appliance: role -> state object, plus derived status.
@@ -275,6 +279,7 @@ function readAppliance(hass, config) {
   const paused = machine === "pause";
   const active = cycleActive === "on" || running || paused;
   const delayed = ["delay_wash", "delaywash"].includes(job);
+  const ovenState = typeof job === "string" ? job.toLowerCase() : "";
   const phases = kind === "oven" ? [] :
     kind === "washer" && PHASES.drumClean[0].states.includes(job) ? PHASES.drumClean : PHASES[kind];
   const phaseIndex = active ? phases.findIndex((p) => p.states.includes(job)) : -1;
@@ -300,6 +305,7 @@ function readAppliance(hass, config) {
   if (!available) status = t("unavailable");
   else if (delayed) status = t("delayed");
   else if (paused) status = t("paused");
+  else if (kind === "oven" && active && ["preheat", "preheating"].includes(ovenState)) status = t("preheating");
   else if (running) status = phaseIndex >= 0 ? t(phases[phaseIndex].key) : t("running");
   else if (finished) status = t("finished");
   else status = t("ready");
@@ -370,7 +376,7 @@ const SHARED_CSS = `
   @keyframes pulse { 50% { opacity: .45; } }
 `;
 
-class SmartThingsLaundryCard extends HTMLElement {
+class SamsungApplianceCard extends HTMLElement {
   static getConfigForm() {
     return {
       schema: [
@@ -495,7 +501,7 @@ class SmartThingsLaundryCard extends HTMLElement {
 
   _openDialog() {
     if (!this._dialog) {
-      this._dialog = document.createElement("smartthings-laundry-dialog");
+      this._dialog = document.createElement("samsung-appliance-dialog");
       this._dialog.addEventListener("closed", () => {
         this._dialog.remove();
         this._dialog = null;
@@ -507,7 +513,7 @@ class SmartThingsLaundryCard extends HTMLElement {
   }
 }
 
-class SmartThingsLaundryDialog extends HTMLElement {
+class SamsungApplianceDialog extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
@@ -522,7 +528,7 @@ class SmartThingsLaundryDialog extends HTMLElement {
   connectedCallback() {
     document.addEventListener("keydown", this._onKey);
     // A history entry lets the back gesture close the dialog, as HA more-info does.
-    history.pushState({ ...history.state, smartthingsLaundryDialog: true }, "");
+    history.pushState({ ...history.state, samsungApplianceDialog: true }, "");
     window.addEventListener("popstate", this._onPop);
     this._tick = setInterval(() => this._render(true), 30000);
   }
@@ -539,7 +545,7 @@ class SmartThingsLaundryDialog extends HTMLElement {
   }
 
   close() {
-    if (history.state?.smartthingsLaundryDialog) history.back();
+    if (history.state?.samsungApplianceDialog) history.back();
     else this._dismiss();
   }
 
@@ -648,12 +654,13 @@ class SmartThingsLaundryDialog extends HTMLElement {
     const main = a.running
       ? { opt: "pause", icon: "mdi:pause", label: t("pause") }
       : { opt: "run", icon: "mdi:play", label: a.paused ? t("resume") : a.kind === "oven" ? t("startCooking") : t("start") };
-    const mainDisabled = disabled || !operationService(a, main.opt);
+    const mainOperation = operationService(a, main.opt);
     const stopDisabled = disabled || !a.active || !operationService(a, "stop");
     return `
-      <button class="ctl primary${busy(main.opt)}" data-action="operate" data-option="${main.opt}" ${mainDisabled ? "disabled" : ""}>
-        <ha-icon icon="${main.icon}"></ha-icon><span>${esc(main.label)}</span>
-      </button>
+      ${a.kind === "oven" && !mainOperation ? "" : `
+        <button class="ctl primary${busy(main.opt)}" data-action="operate" data-option="${main.opt}" ${disabled ? "disabled" : ""}>
+          <ha-icon icon="${main.icon}"></ha-icon><span>${esc(main.label)}</span>
+        </button>`}
       <button class="ctl${busy("stop")}" data-action="operate" data-option="stop" ${stopDisabled ? "disabled" : ""}>
         <ha-icon icon="mdi:stop"></ha-icon><span>${esc(t("stop"))}</span>
       </button>`;
@@ -693,20 +700,21 @@ class SmartThingsLaundryDialog extends HTMLElement {
         const s = a.ents[tile.role];
         const domain = s.entity_id.split(".")[0];
         const unavailable = s.state === "unavailable";
-        // Supply amounts and oven setpoint/time can change mid-cycle.
-        const changeDuringCycle = ["detergentAmount", "detergentHardness", "softenerAmount", "softenerConcentration", "ovenTemperature", "cookTime"];
+        // Oven setpoint/time and non-heating settings can change mid-cycle.
+        const changeDuringCycle = ["detergentAmount", "detergentHardness", "softenerAmount", "softenerConcentration", "ovenTemperature", "cookTime", "lamp", "sound", "energySaving"];
         const disabled = unavailable || (locked && !changeDuringCycle.includes(tile.role)) ||
           (domain === "switch" && s.state !== "on" && s.attributes.course_supported === false);
-        const isOn = domain === "switch" && s.state === "on";
+        const toggleable = domain === "switch" || domain === "light";
+        const isOn = toggleable && s.state === "on";
         let value;
-        if (domain === "switch") value = isOn ? a.t("on") : a.t("off");
+        if (toggleable) value = isOn ? a.t("on") : a.t("off");
         else if (tile.role === "delayEnd") value = Number(s.state) > 0 ? formatDuration(Number(s.state)) : a.t("off");
         else if (tile.role === "delayStart") value = Number(s.state) > 0 ? formatDuration(Number(s.state) * 60) : a.t("off");
         else if (domain === "number") value = [s.state, s.attributes.unit_of_measurement].filter(Boolean).join(" ");
         else value = unavailable ? "-" : optionLabel(this._hass, tile.role, s, s.state);
         const open = this._open === tile.role && !disabled;
         if (open) panel = this._optionPanel(a, tile, s);
-        const action = domain === "switch" ? "toggle-switch" : "expand";
+        const action = toggleable ? "toggle-switch" : "expand";
         return `
           <button class="tile ${isOn ? "on" : ""} ${open ? "open" : ""}${this._busy === tile.role ? " busy" : ""}" data-action="${action}" data-role="${tile.role}" ${disabled ? "disabled" : ""}>
             <ha-icon icon="${tile.icon}"></ha-icon>
@@ -834,7 +842,7 @@ class SmartThingsLaundryDialog extends HTMLElement {
         this._call(role, "number", "set_value", { entity_id: a.ents[role].entity_id, value: Number(value) });
         break;
       case "toggle-switch":
-        this._call(role, "switch", "toggle", { entity_id: a.ents[role].entity_id });
+        this._call(role, a.ents[role].entity_id.split(".")[0], "toggle", { entity_id: a.ents[role].entity_id });
         break;
     }
   }
@@ -942,12 +950,12 @@ const DIALOG_CSS = `
   .chip.warn ha-icon { color: var(--warning-color, #ffa600); }
 `;
 
-customElements.define("smartthings-laundry-card", SmartThingsLaundryCard);
-customElements.define("smartthings-laundry-dialog", SmartThingsLaundryDialog);
+customElements.define("samsung-appliance-card", SamsungApplianceCard);
+customElements.define("samsung-appliance-dialog", SamsungApplianceDialog);
 
 window.customCards = window.customCards || [];
 window.customCards.push({
-  type: "smartthings-laundry-card",
+  type: "samsung-appliance-card",
   get name() {
     return CARD_NAMES[homeAssistantLanguage()];
   },
@@ -955,4 +963,4 @@ window.customCards.push({
   preview: false,
 });
 
-console.info(`%c SMARTTHINGS-LAUNDRY-CARD %c ${VERSION} `, "background:#03a9f4;color:#fff", "");
+console.info(`%c SAMSUNG-APPLIANCE-CARD %c ${VERSION} `, "background:#03a9f4;color:#fff", "");
