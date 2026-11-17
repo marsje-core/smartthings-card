@@ -272,6 +272,14 @@ function canSelectOption(a, role, option) {
     REMOTE_STARTABLE_OVEN_MODES.has(normalizeMode(option));
 }
 
+function isChildLocked(entity) {
+  if (!entity) return false;
+  // Home Assistant lock-class binary sensors are on when unlocked.
+  return entity.attributes?.device_class === "lock"
+    ? entity.state === "off"
+    : entity.state === "on";
+}
+
 // Snapshot of the appliance: role -> state object, plus derived status.
 function readAppliance(hass, config) {
   const deviceId = resolveDevice(hass, config);
@@ -624,7 +632,7 @@ class SamsungApplianceDialog extends HTMLElement {
             ${this._controlButtons(a, ctlDisabled)}
           </div>
           ${a.available && !a.remoteOn ? `<div class="banner"><ha-icon icon="mdi:remote-off"></ha-icon><span>${esc(t("remote_off"))}</span></div>` : ""}
-          ${a.ents.childLock?.state === "on" ? `<div class="banner soft"><ha-icon icon="mdi:lock"></ha-icon><span>${esc(t("child_lock"))}</span></div>` : ""}
+          ${isChildLocked(a.ents.childLock) ? `<div class="banner soft"><ha-icon icon="mdi:lock"></ha-icon><span>${esc(t("child_lock"))}</span></div>` : ""}
           ${this._error ? `<div class="banner"><ha-icon icon="mdi:alert-circle-outline"></ha-icon><span>${esc(this._error)}</span></div>` : ""}
           ${a.ents.cycle ? this._programSection(a, locked || !a.remoteOn) : ""}
           ${this._optionsSection(a, locked)}
