@@ -17,11 +17,13 @@ Oven controls appear when exposed by the appliance: mode selection, setpoint and
 
 This [fork](https://github.com/marsje-core/smartthings-card) adds support for another Samsung washer and firmware variant (`DA_WM_TP1_21_COMMON`), including through LocalThings, and for LocalThings ovens and microwave/oven combinations. It also provides Dutch translations.
 
-The card finds the entities of the device by `translation_key`, so it does not depend on entity IDs. LocalThings cycle actions use its start, pause, and stop buttons; options are limited to entities exposed by the appliance. The accent color is the theme `--primary-color`.
+The card finds entities by their device and `translation_key`, or by device class for the SmartThings oven's current-temperature sensor, so it does not depend on entity IDs. LocalThings cycle actions use its start, pause, and stop buttons; options are limited to entities exposed by the appliance. The accent color is the theme `--primary-color`.
 
 When the washer reports drum cleaning as its current progress, the card displays a single drum-cleaning phase instead of wash, rinse, and spin.
 
 If the same appliance is registered through both integrations, choose the LocalThings device in the card configuration to see its locally exposed options. Selecting the SmartThings device only shows its SmartThings entities.
+
+The official SmartThings integration exposes oven status, mode and temperatures as sensors, and may expose a stop button and lamp selector. These readings are displayed when available, but a read-only mode sensor does not provide program selection or remote start. The device picker lists devices from SmartThings and LocalThings.
 
 ## Devices and testing
 
