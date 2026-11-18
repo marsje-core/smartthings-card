@@ -13,7 +13,7 @@ Lovelace card for Samsung washers, dryers, and ovens exposed by the Home Assista
 - detergent and softener levels
 - oven cooking mode, temperature, cook time, and available oven options
 
-Oven controls appear when exposed by the appliance: mode selection, setpoint and cook-time adjustment, a dedicated Start cooking action, current temperature, remaining time, and door state. Preheating is shown as a distinct status. On the NQ5B4553FBS/U1, modes that cannot be started remotely remain visible but disabled; supported remote-start modes include Convection, Fan Conventional, Large Grill, Fan Grill, Air Fryer, Deodorization, and Keep Warm. The oven light and sound setting can be toggled while cooking; setpoint and cook time also remain adjustable when the integration exposes writable number entities.
+Oven controls appear when exposed by the appliance: mode selection, setpoint and cook-time adjustment, a dedicated Start cooking action, current temperature, remaining time, and door state. Preheating is shown as a distinct status. On the NQ5B4553FBS/U1, modes that cannot be started remotely can still be selected and sent to the appliance, but the card disables Start cooking for those modes; supported remote-start modes include Convection, Fan Conventional, Large Grill, Fan Grill, Air Fryer, Deodorization, and Keep Warm. The oven light and sound setting can be toggled while cooking; setpoint and cook time also remain adjustable when the integration exposes writable number entities.
 
 This [fork](https://github.com/marsje-core/smartthings-card) adds support for another Samsung washer and firmware variant (`DA_WM_TP1_21_COMMON`), including through LocalThings, and for LocalThings ovens and microwave/oven combinations. It also provides Dutch translations.
 
