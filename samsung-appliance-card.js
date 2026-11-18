@@ -112,6 +112,7 @@ const I18N = {
     remaining: "Tempo rimanente",
     locked_running: "Non modificabile durante il ciclo",
     remote_start_unavailable: "Questa modalità può essere selezionata, ma non avviata da remoto.",
+    localthings_mode_unavailable: "LocalThings non può inviare questa modalità al forno. Usa l'app SmartThings o il pannello del forno.",
     temperature: "Temperatura", spinLevel: "Centrifuga", rinseCount: "Risciacqui",
     dryLevel: "Grado asciugatura", dryingTime: "Durata",
     delayEnd: "Fine programmata", delayStart: "Partenza ritardata", off: "Off", in: "tra",
@@ -145,6 +146,7 @@ const I18N = {
     remaining: "Time remaining",
     locked_running: "Locked while a cycle runs",
     remote_start_unavailable: "This mode can be selected but cannot be started remotely.",
+    localthings_mode_unavailable: "LocalThings cannot send this mode to the oven. Use the SmartThings app or the oven controls instead.",
     temperature: "Temperature", spinLevel: "Spin", rinseCount: "Rinses",
     dryLevel: "Dry level", dryingTime: "Drying time",
     delayEnd: "Delay end", delayStart: "Delay start", off: "Off", in: "in",
@@ -178,6 +180,7 @@ const I18N = {
     remaining: "Resterende tijd",
     locked_running: "Niet aanpasbaar tijdens een programma",
     remote_start_unavailable: "Deze modus kan worden geselecteerd, maar niet op afstand worden gestart.",
+    localthings_mode_unavailable: "LocalThings kan deze modus niet naar de oven versturen. Gebruik de SmartThings-app of de bediening op de oven.",
     temperature: "Temperatuur", spinLevel: "Centrifugeren", rinseCount: "Spoelbeurten",
     dryLevel: "Droogtegraad", dryingTime: "Droogtijd",
     delayEnd: "Eindtijd uitstellen", delayStart: "Start uitstellen", off: "Uit", in: "over",
@@ -273,8 +276,8 @@ function hasRemoteOvenModeRestrictions(device) {
   );
 }
 
-function canStartRemotely(a) {
-  const mode = normalizeMode(a.ents.cycle?.state);
+function canStartRemotely(a, option = a.ents.cycle?.state) {
+  const mode = normalizeMode(option);
   const restrictedMode = a.kind === "oven" &&
     (a.restrictRemoteOvenModes || mode.startsWith("microwave"));
   return !restrictedMode ||
@@ -357,6 +360,7 @@ function readAppliance(hass, config) {
   return {
     deviceId, device, ents, kind, lang, t, machine, job, available, running, paused, active,
     delayed, phases, phaseIndex, finished, remainingMin, endsAt, status,
+    cyclePlatform: cycleEntry?.platform,
     restrictRemoteOvenModes: kind === "oven" && hasRemoteOvenModeRestrictions(device),
     remoteOn: ents.remote ? ents.remote.state === "on" : true,
     name: device?.name_by_user || device?.name || t(kind),
@@ -733,7 +737,7 @@ class SamsungApplianceDialog extends HTMLElement {
     const hint = locked && a.active
       ? a.t("locked_running")
       : modeCannotStart
-        ? a.t("remote_start_unavailable")
+        ? a.t(a.cyclePlatform === "localthings" ? "localthings_mode_unavailable" : "remote_start_unavailable")
         : null;
     return `
       <div class="section">
@@ -891,6 +895,11 @@ class SamsungApplianceDialog extends HTMLElement {
         window.dispatchEvent(new CustomEvent("location-changed"));
         break;
       case "operate":
+        if (option === "send" && a.cyclePlatform === "localthings" && !canStartRemotely(a)) {
+          this._error = a.t("localthings_mode_unavailable");
+          this._render(true);
+          break;
+        }
         const operation = operationService(a, option);
         if (operation) this._call(option, operation.domain, operation.service, operation.data);
         break;
@@ -899,6 +908,11 @@ class SamsungApplianceDialog extends HTMLElement {
         this._render(true);
         break;
       case "select":
+        if (role === "cycle" && !a.active && a.cyclePlatform === "localthings" && !canStartRemotely(a, option)) {
+          this._error = a.t("localthings_mode_unavailable");
+          this._render(true);
+          break;
+        }
         this._open = role === "cycle" ? null : this._open;
         this._call(`${role}:${option}`, "select", "select_option", { entity_id: a.ents[role].entity_id, option });
         break;

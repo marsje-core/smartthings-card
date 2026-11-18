@@ -78,6 +78,9 @@ add("O","binary_sensor.o_remote","remote_control","on",{},"localthings");
 const hass={states:S,entities:E,devices:{W:{name:"Washer"},D:{name:"Dryer"},L:{name:"WW11DB8B95GBU3"},O:{name:"Samsung oven",model:"TP1X_DA-KS-OVEN-01061"}},language:"en",locale:{language:"en"},
  formatEntityState:(s,v)=>(v??s.state).replace(/_/g," "),
  callService:async(d,sv,data)=>{console.log("CALL",d,sv,JSON.stringify(data)); if(data.entity_id==="select.d_op") throw new Error("Can only be updated when remote control is enabled");
+   if(data.entity_id==="select.o_mode" && S["binary_sensor.o_active"].state!=="on" &&
+      !["convection","fanconventional","largegrill","fangrill","airfryer","deodorization","keepwarm"].includes(String(data.option).toLowerCase().replace(/[^a-z0-9]/g,"")))
+     throw new Error("This mode cannot be started remotely with LocalThings");
    const s=S[data.entity_id]; if(sv==="select_option") s.state=data.option; if(sv==="set_value") s.state=String(data.value); if(sv==="toggle") s.state=s.state==="on"?"off":"on";
    if(data.entity_id==="select.w_op") S["sensor.w_ms"].state=data.option;
    if(sv==="press" && data.entity_id==="button.l_pause"){S["sensor.l_ms"].state="pause";S["binary_sensor.l_active"].state="off";}
