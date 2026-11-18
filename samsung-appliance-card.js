@@ -100,6 +100,7 @@ const I18N = {
     running: "In funzione", paused: "In pausa", ready: "Pronta", finished: "Completato",
     delayed: "Partenza programmata", unavailable: "Non disponibile",
     start: "Avvia", resume: "Riprendi", pause: "Pausa", stop: "Stop",
+    sendToOven: "Invia al forno",
     preheating: "Preriscaldamento",
     ends_at: "Termina alle", left: "rimanenti",
     remote_off: "Controllo remoto disattivato. Attivalo sull'apparecchio per comandarlo.",
@@ -132,6 +133,7 @@ const I18N = {
     running: "Running", paused: "Paused", ready: "Ready", finished: "Finished",
     delayed: "Delayed start", unavailable: "Unavailable",
     start: "Start", resume: "Resume", pause: "Pause", stop: "Stop",
+    sendToOven: "Send to oven",
     preheating: "Preheating",
     ends_at: "Ends at", left: "left",
     remote_off: "Remote control is off. Enable it on the appliance to control it.",
@@ -164,6 +166,7 @@ const I18N = {
     running: "Bezig", paused: "Gepauzeerd", ready: "Gereed", finished: "Klaar",
     delayed: "Uitgestelde start", unavailable: "Niet beschikbaar",
     start: "Starten", resume: "Hervatten", pause: "Pauzeren", stop: "Stoppen",
+    sendToOven: "Versturen naar oven",
     preheating: "Voorverwarmen",
     ends_at: "Klaar om", left: "resterend",
     remote_off: "Bediening op afstand is uitgeschakeld. Schakel deze in op het apparaat om het te bedienen.",
@@ -271,8 +274,11 @@ function hasRemoteOvenModeRestrictions(device) {
 }
 
 function canStartRemotely(a) {
-  return !a.restrictRemoteOvenModes || a.active ||
-    REMOTE_STARTABLE_OVEN_MODES.has(normalizeMode(a.ents.cycle?.state));
+  const mode = normalizeMode(a.ents.cycle?.state);
+  const restrictedMode = a.kind === "oven" &&
+    (a.restrictRemoteOvenModes || mode.startsWith("microwave"));
+  return !restrictedMode ||
+    REMOTE_STARTABLE_OVEN_MODES.has(mode);
 }
 
 function isChildLocked(entity) {
@@ -358,6 +364,16 @@ function readAppliance(hass, config) {
 }
 
 function operationService(a, option) {
+  if (option === "send") {
+    const cycle = a.ents.cycle;
+    if (!cycle || ["unknown", "unavailable"].includes(cycle.state)) return null;
+    return {
+      domain: "select",
+      service: "select_option",
+      data: { entity_id: cycle.entity_id, option: cycle.state },
+    };
+  }
+  if (option === "run" && a.kind === "oven" && !canStartRemotely(a)) return null;
   if (a.ents.operating) {
     return {
       domain: "select",
@@ -690,9 +706,12 @@ class SamsungApplianceDialog extends HTMLElement {
   _controlButtons(a, disabled) {
     const { t } = a;
     const busy = (k) => (this._busy === k ? " busy" : "");
+    const sendMode = a.kind === "oven" && !a.active && !canStartRemotely(a);
     const main = a.running
       ? { opt: "pause", icon: "mdi:pause", label: t("pause") }
-      : { opt: "run", icon: "mdi:play", label: a.paused ? t("resume") : a.kind === "oven" ? t("startCooking") : t("start") };
+      : sendMode
+        ? { opt: "send", icon: "mdi:send", label: t("sendToOven") }
+        : { opt: "run", icon: "mdi:play", label: a.paused ? t("resume") : a.kind === "oven" ? t("startCooking") : t("start") };
     const mainOperation = operationService(a, main.opt);
     const mainDisabled = disabled || (main.opt === "run" && !canStartRemotely(a));
     const stopDisabled = disabled || !a.active || !operationService(a, "stop");
