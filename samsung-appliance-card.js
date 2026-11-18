@@ -110,6 +110,7 @@ const I18N = {
     readings: "Rilevazioni", door: "Porta", open: "Aperta", closed: "Chiusa",
     remaining: "Tempo rimanente",
     locked_running: "Non modificabile durante il ciclo",
+    remote_start_unavailable: "Questa modalità può essere selezionata, ma non avviata da remoto.",
     temperature: "Temperatura", spinLevel: "Centrifuga", rinseCount: "Risciacqui",
     dryLevel: "Grado asciugatura", dryingTime: "Durata",
     delayEnd: "Fine programmata", delayStart: "Partenza ritardata", off: "Off", in: "tra",
@@ -141,6 +142,7 @@ const I18N = {
     readings: "Readings", door: "Door", open: "Open", closed: "Closed",
     remaining: "Time remaining",
     locked_running: "Locked while a cycle runs",
+    remote_start_unavailable: "This mode can be selected but cannot be started remotely.",
     temperature: "Temperature", spinLevel: "Spin", rinseCount: "Rinses",
     dryLevel: "Dry level", dryingTime: "Drying time",
     delayEnd: "Delay end", delayStart: "Delay start", off: "Off", in: "in",
@@ -172,6 +174,7 @@ const I18N = {
     readings: "Metingen", door: "Deur", open: "Open", closed: "Gesloten",
     remaining: "Resterende tijd",
     locked_running: "Niet aanpasbaar tijdens een programma",
+    remote_start_unavailable: "Deze modus kan worden geselecteerd, maar niet op afstand worden gestart.",
     temperature: "Temperatuur", spinLevel: "Centrifugeren", rinseCount: "Spoelbeurten",
     dryLevel: "Droogtegraad", dryingTime: "Droogtijd",
     delayEnd: "Eindtijd uitstellen", delayStart: "Start uitstellen", off: "Uit", in: "over",
@@ -267,9 +270,9 @@ function hasRemoteOvenModeRestrictions(device) {
   );
 }
 
-function canSelectOption(a, role, option) {
-  return role !== "cycle" || !a.restrictRemoteOvenModes ||
-    REMOTE_STARTABLE_OVEN_MODES.has(normalizeMode(option));
+function canStartRemotely(a) {
+  return !a.restrictRemoteOvenModes || a.active ||
+    REMOTE_STARTABLE_OVEN_MODES.has(normalizeMode(a.ents.cycle?.state));
 }
 
 function isChildLocked(entity) {
@@ -691,10 +694,11 @@ class SamsungApplianceDialog extends HTMLElement {
       ? { opt: "pause", icon: "mdi:pause", label: t("pause") }
       : { opt: "run", icon: "mdi:play", label: a.paused ? t("resume") : a.kind === "oven" ? t("startCooking") : t("start") };
     const mainOperation = operationService(a, main.opt);
+    const mainDisabled = disabled || (main.opt === "run" && !canStartRemotely(a));
     const stopDisabled = disabled || !a.active || !operationService(a, "stop");
     return `
       ${a.kind === "oven" && !mainOperation ? "" : `
-        <button class="ctl primary${busy(main.opt)}" data-action="operate" data-option="${main.opt}" ${disabled ? "disabled" : ""}>
+        <button class="ctl primary${busy(main.opt)}" data-action="operate" data-option="${main.opt}" ${mainDisabled ? "disabled" : ""}>
           <ha-icon icon="${main.icon}"></ha-icon><span>${esc(main.label)}</span>
         </button>`}
       <button class="ctl${busy("stop")}" data-action="operate" data-option="stop" ${stopDisabled ? "disabled" : ""}>
@@ -706,9 +710,15 @@ class SamsungApplianceDialog extends HTMLElement {
     const s = a.ents.cycle;
     const options = s.attributes.options || [];
     const open = this._open === "cycle" && !locked;
+    const modeCannotStart = !a.active && !canStartRemotely(a);
+    const hint = locked && a.active
+      ? a.t("locked_running")
+      : modeCannotStart
+        ? a.t("remote_start_unavailable")
+        : null;
     return `
       <div class="section">
-        <div class="section-title">${esc(a.t(a.kind === "oven" ? "cookingMode" : "program"))}${locked && a.active ? `<span class="hint">${esc(a.t("locked_running"))}</span>` : ""}</div>
+        <div class="section-title">${esc(a.t(a.kind === "oven" ? "cookingMode" : "program"))}${hint ? `<span class="hint">${esc(hint)}</span>` : ""}</div>
         <button class="select-row ${open ? "open" : ""}" data-action="expand" data-role="cycle" ${locked ? "disabled" : ""}>
           <ha-icon icon="mdi:tune-variant"></ha-icon>
           <span class="grow">${esc(optionLabel(this._hass, "cycle", s, s.state))}</span>
@@ -721,10 +731,7 @@ class SamsungApplianceDialog extends HTMLElement {
   _pills(a, role, s, options, wide = false) {
     return `<div class="pills ${wide ? "wide" : ""}">${options
       .map(
-        (o) => {
-          const disabled = !canSelectOption(a, role, o);
-          return `<button class="pill ${o === s.state ? "sel" : ""}${this._busy === `${role}:${o}` ? " busy" : ""}" data-action="select" data-role="${role}" data-option="${esc(o)}" ${disabled ? "disabled" : ""}>${esc(optionLabel(this._hass, role, s, o))}</button>`;
-        },
+        (o) => `<button class="pill ${o === s.state ? "sel" : ""}${this._busy === `${role}:${o}` ? " busy" : ""}" data-action="select" data-role="${role}" data-option="${esc(o)}">${esc(optionLabel(this._hass, role, s, o))}</button>`,
       )
       .join("")}</div>`;
   }
