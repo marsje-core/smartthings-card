@@ -11,7 +11,7 @@ customElements.define("ha-icon", class extends HTMLElement{connectedCallback(){t
 </script>
 <script type="module" src="../samsung-appliance-card.js"></script>
 </head><body>
-<div id="w"></div><div id="d"></div><div id="w2"></div><div id="o"></div>
+<div id="w"></div><div id="d"></div><div id="w2"></div><div id="o"></div><div id="os"></div>
 <script type="module">
 const now=Date.now();
 function st(id,state,attrs={}){return {entity_id:id,state,attributes:attrs}}
@@ -75,7 +75,17 @@ add("O","binary_sensor.o_child_lock","child_lock","off",{device_class:"lock"},"l
 add("O","light.o_lamp","lamp","on",{},"localthings");
 add("O","switch.o_sound","sound","off",{},"localthings");
 add("O","binary_sensor.o_remote","remote_control","on",{},"localthings");
-const hass={states:S,entities:E,devices:{W:{name:"Washer"},D:{name:"Dryer"},L:{name:"WW11DB8B95GBU3"},O:{name:"Samsung oven",model:"TP1X_DA-KS-OVEN-01061"}},language:"en",locale:{language:"en"},
+add("OS","sensor.os_machine","oven_machine_state","ready");
+add("OS","sensor.os_job","oven_job_state","ready");
+add("OS","sensor.os_mode","oven_mode","others");
+add("OS","sensor.os_temperature",null,"20",{device_class:"temperature",unit_of_measurement:"°C"});
+add("OS","sensor.os_setpoint","oven_setpoint","unknown",{device_class:"temperature",unit_of_measurement:"°C"});
+add("OS","sensor.os_completion","completion_time",new Date(now+60*60000).toISOString());
+add("OS","binary_sensor.os_door","door","off");
+add("OS","binary_sensor.os_remote","remote_control","on");
+add("OS","button.os_stop","stop","unknown");
+add("OS","select.os_lamp","lamp","off",{options:["off","high"]});
+const hass={states:S,entities:E,devices:{W:{name:"Washer"},D:{name:"Dryer"},L:{name:"WW11DB8B95GBU3"},O:{name:"Samsung oven",model:"TP1X_DA-KS-OVEN-01061"},OS:{name:"SmartThings oven",model:"TP1X_DA-KS-OVEN-01061"}},language:"en",locale:{language:"en"},
  formatEntityState:(s,v)=>(v??s.state).replace(/_/g," "),
  callService:async(d,sv,data)=>{console.log("CALL",d,sv,JSON.stringify(data)); if(data.entity_id==="select.d_op") throw new Error("Can only be updated when remote control is enabled");
    if(data.entity_id==="select.o_mode" && S["binary_sensor.o_active"].state!=="on" &&
@@ -89,8 +99,9 @@ const hass={states:S,entities:E,devices:{W:{name:"Washer"},D:{name:"Dryer"},L:{n
    if(sv==="press" && data.entity_id==="button.o_start"){S["sensor.o_ms"].state="active";S["sensor.o_state"].state="cooking";S["binary_sensor.o_active"].state="on";}
    if(sv==="press" && data.entity_id==="button.o_pause"){S["sensor.o_ms"].state="pause";S["binary_sensor.o_active"].state="off";}
    if(sv==="press" && data.entity_id==="button.o_stop"){S["sensor.o_ms"].state="idle";S["sensor.o_state"].state="ready";S["binary_sensor.o_active"].state="off";}
+   if(sv==="press" && data.entity_id==="button.os_stop"){S["sensor.os_machine"].state="ready";S["sensor.os_job"].state="ready";}
    const h={...hass,states:{...S}}; window.cards.forEach(c=>c.hass=h);}};
 await customElements.whenDefined("samsung-appliance-card");
 window.cards=[];
-for (const [el,dev] of [["w","W"],["d","D"],["w2","L"],["o","O"]]) {const c=document.createElement("samsung-appliance-card");c.setConfig({device_id:dev});c.hass=hass;document.getElementById(el).appendChild(c);cards.push(c);}
+for (const [el,dev] of [["w","W"],["d","D"],["w2","L"],["o","O"],["os","OS"]]) {const c=document.createElement("samsung-appliance-card");c.setConfig({device_id:dev});c.hass=hass;document.getElementById(el).appendChild(c);cards.push(c);}
 </script></body></html>

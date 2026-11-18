@@ -16,8 +16,10 @@ const ROLES = {
   "sensor.washer_machine_state": "machineState",
   "sensor.dryer_machine_state": "machineState",
   "sensor.machine_state": "machineState",
+  "sensor.oven_machine_state": "machineState",
   "sensor.washer_job_state": "jobState",
   "sensor.dryer_job_state": "jobState",
+  "sensor.oven_job_state": "jobState",
   "sensor.progress": "jobState",
   "sensor.completion_time": "completion",
   "sensor.finish_time": "finishTime",
@@ -25,10 +27,13 @@ const ROLES = {
   "sensor.completion_minutes": "completionMinutes",
   "sensor.cook_time_remaining": "cookTimeRemaining",
   "sensor.current_temp_c": "currentTemperature",
+  "sensor.oven_mode": "currentMode",
+  "sensor.oven_setpoint": "ovenSetpoint",
   "sensor.oven_state": "jobState",
   "sensor.cavity_state": "jobState",
   "binary_sensor.cycle_active": "cycleActive",
   "binary_sensor.door_open": "doorOpen",
+  "binary_sensor.door": "doorOpen",
   "sensor.detergent_level": "detergent",
   "sensor.softener_level": "softener",
   "switch.auto_detergent": "autoDetergent",
@@ -42,6 +47,7 @@ const ROLES = {
   "select.dryer_cycle": "cycle",
   "select.oven_mode": "cycle",
   "select.cooking_mode": "cycle",
+  "select.lamp": "lamp",
   "number.oven_setpoint": "ovenTemperature",
   "number.setpoint": "ovenTemperature",
   "number.cook_time": "cookTime",
@@ -107,7 +113,7 @@ const I18N = {
     child_lock: "Blocco bambini attivo",
     program: "Programma", options: "Opzioni", supplies: "Detersivi",
     cookingMode: "Modalità di cottura", cookTime: "Durata cottura",
-    startCooking: "Avvia cottura", currentTemperature: "Temperatura attuale",
+    startCooking: "Avvia cottura", currentTemperature: "Temperatura attuale", targetTemperature: "Temperatura impostata",
     readings: "Rilevazioni", door: "Porta", open: "Aperta", closed: "Chiusa",
     remaining: "Tempo rimanente",
     locked_running: "Non modificabile durante il ciclo",
@@ -141,7 +147,7 @@ const I18N = {
     child_lock: "Child lock on",
     program: "Program", options: "Options", supplies: "Supplies",
     cookingMode: "Cooking mode", cookTime: "Cook time",
-    startCooking: "Start cooking", currentTemperature: "Current temperature",
+    startCooking: "Start cooking", currentTemperature: "Current temperature", targetTemperature: "Set temperature",
     readings: "Readings", door: "Door", open: "Open", closed: "Closed",
     remaining: "Time remaining",
     locked_running: "Locked while a cycle runs",
@@ -175,7 +181,7 @@ const I18N = {
     child_lock: "Kinderslot is ingeschakeld",
     program: "Programma", options: "Opties", supplies: "Wasmiddelen",
     cookingMode: "Bereidingsmodus", cookTime: "Bereidingstijd",
-    startCooking: "Bereiding starten", currentTemperature: "Huidige temperatuur",
+    startCooking: "Bereiding starten", currentTemperature: "Huidige temperatuur", targetTemperature: "Ingestelde temperatuur",
     readings: "Metingen", door: "Deur", open: "Open", closed: "Gesloten",
     remaining: "Resterende tijd",
     locked_running: "Niet aanpasbaar tijdens een programma",
@@ -310,9 +316,17 @@ function readAppliance(hass, config) {
   const machineEntry = ents.machineState && hass.entities[ents.machineState.entity_id];
   const cycleEntry = ents.cycle && hass.entities[ents.cycle.entity_id];
   const translationKeys = [machineEntry?.translation_key, cycleEntry?.translation_key];
-  const isOven = translationKeys.some((key) => ["oven_mode", "cooking_mode"].includes(key)) ||
-    Boolean(ents.ovenTemperature || ents.cookTime || ents.startCooking || ents.currentTemperature);
+  const isOven = translationKeys.some((key) => ["oven_machine_state", "oven_mode", "cooking_mode"].includes(key)) ||
+    Boolean(ents.currentMode || ents.ovenSetpoint || ents.ovenTemperature || ents.cookTime || ents.startCooking || ents.currentTemperature);
   const kind = isOven ? "oven" : translationKeys.some((key) => key?.includes("dryer")) ? "dryer" : "washer";
+  if (isOven && !ents.currentTemperature) {
+    const temperatureEntry = Object.values(hass.entities || {}).find((entry) =>
+      entry.device_id === deviceId && entry.platform === "smartthings" &&
+      entry.entity_id.startsWith("sensor.") && !entry.translation_key &&
+      hass.states[entry.entity_id]?.attributes?.device_class === "temperature",
+    );
+    if (temperatureEntry) ents.currentTemperature = hass.states[temperatureEntry.entity_id];
+  }
   const lang = homeAssistantLanguage(hass);
   const t = (k) => I18N[lang][k] ?? I18N.en[k] ?? k;
 
@@ -321,11 +335,11 @@ function readAppliance(hass, config) {
   const available = machine !== undefined && machine !== "unavailable";
   const cycleActive = ents.cycleActive?.state;
   const running =
-    machine === "run" ||
+    ["run", "running"].includes(machine) ||
     (machine === "active" && (cycleActive === undefined || cycleActive === "on"));
-  const paused = machine === "pause";
+  const paused = ["pause", "paused"].includes(machine);
   const active = cycleActive === "on" || running || paused;
-  const delayed = ["delay_wash", "delaywash"].includes(job);
+  const delayed = ["delay_wash", "delaywash"].includes(job) || (kind === "oven" && job === "scheduled_start");
   const ovenState = typeof job === "string" ? job.toLowerCase() : "";
   const phases = kind === "oven" ? [] :
     kind === "washer" && PHASES.drumClean[0].states.includes(job) ? PHASES.drumClean : PHASES[kind];
@@ -352,7 +366,7 @@ function readAppliance(hass, config) {
   if (!available) status = t("unavailable");
   else if (delayed) status = t("delayed");
   else if (paused) status = t("paused");
-  else if (kind === "oven" && active && ["preheat", "preheating"].includes(ovenState)) status = t("preheating");
+  else if (kind === "oven" && active && ["preheat", "preheating", "fast_preheat"].includes(ovenState)) status = t("preheating");
   else if (running) status = phaseIndex >= 0 ? t(phases[phaseIndex].key) : t("running");
   else if (finished) status = t("finished");
   else status = t("ready");
@@ -439,7 +453,7 @@ class SamsungApplianceCard extends HTMLElement {
   static getConfigForm() {
     return {
       schema: [
-        { name: "device_id", required: true, selector: { device: {} } },
+        { name: "device_id", required: true, selector: { device: { filter: [{ integration: "smartthings" }, { integration: "localthings" }] } } },
         { name: "name", selector: { text: {} } },
       ],
     };
@@ -448,7 +462,7 @@ class SamsungApplianceCard extends HTMLElement {
   static getStubConfig(hass) {
     const entry = Object.values(hass.entities || {}).find(
       (e) => ["smartthings", "localthings"].includes(e.platform) &&
-        ["washer_machine_state", "dryer_machine_state", "machine_state"].includes(e.translation_key),
+        ["washer_machine_state", "dryer_machine_state", "machine_state", "oven_machine_state"].includes(e.translation_key),
     );
     return { device_id: entry?.device_id || "" };
   }
@@ -657,7 +671,7 @@ class SamsungApplianceDialog extends HTMLElement {
           ${a.available && !a.remoteOn ? `<div class="banner"><ha-icon icon="mdi:remote-off"></ha-icon><span>${esc(t("remote_off"))}</span></div>` : ""}
           ${isChildLocked(a.ents.childLock) ? `<div class="banner soft"><ha-icon icon="mdi:lock"></ha-icon><span>${esc(t("child_lock"))}</span></div>` : ""}
           ${this._error ? `<div class="banner"><ha-icon icon="mdi:alert-circle-outline"></ha-icon><span>${esc(this._error)}</span></div>` : ""}
-          ${a.ents.cycle ? this._programSection(a, locked || !a.remoteOn) : ""}
+          ${a.ents.cycle || a.ents.currentMode ? this._programSection(a, locked || !a.remoteOn) : ""}
           ${this._optionsSection(a, locked)}
           ${this._ovenReadingsSection(a)}
           ${this._suppliesSection(a)}
@@ -684,7 +698,8 @@ class SamsungApplianceDialog extends HTMLElement {
       small = a.endsAt ? `${t("ends_at")} ${formatClock(this._hass, a.endsAt)}` : t("left");
     } else {
       big = a.status;
-      small = a.ents.cycle && a.available ? optionLabel(this._hass, "cycle", a.ents.cycle, a.ents.cycle.state) : "";
+      const mode = a.ents.cycle || a.ents.currentMode;
+      small = mode && a.available ? optionLabel(this._hass, "cycle", mode, mode.state) : "";
     }
     return `
       <div class="hero ${a.active ? "active" : ""} ${a.running ? "running" : ""}">
@@ -730,7 +745,14 @@ class SamsungApplianceDialog extends HTMLElement {
   }
 
   _programSection(a, locked) {
-    const s = a.ents.cycle;
+    const s = a.ents.cycle || a.ents.currentMode;
+    if (!a.ents.cycle) {
+      return `
+        <div class="section">
+          <div class="section-title">${esc(a.t("cookingMode"))}</div>
+          <div class="select-row"><ha-icon icon="mdi:tune-variant"></ha-icon><span class="grow">${esc(optionLabel(this._hass, "cycle", s, s.state))}</span></div>
+        </div>`;
+    }
     const options = s.attributes.options || [];
     const open = this._open === "cycle" && !locked;
     const modeCannotStart = !a.active && !canStartRemotely(a);
@@ -854,6 +876,11 @@ class SamsungApplianceDialog extends HTMLElement {
     if (temperature && !["unknown", "unavailable"].includes(temperature.state)) {
       const value = [temperature.state, temperature.attributes.unit_of_measurement].filter(Boolean).join(" ");
       items.push(`<div class="chip"><ha-icon icon="mdi:thermometer"></ha-icon>${esc(a.t("currentTemperature"))}: ${esc(value)}</div>`);
+    }
+    const setpoint = a.ents.ovenSetpoint;
+    if (setpoint && !["unknown", "unavailable"].includes(setpoint.state)) {
+      const value = [setpoint.state, setpoint.attributes.unit_of_measurement].filter(Boolean).join(" ");
+      items.push(`<div class="chip"><ha-icon icon="mdi:thermometer-chevron-up"></ha-icon>${esc(a.t("targetTemperature"))}: ${esc(value)}</div>`);
     }
     const remaining = a.ents.cookTimeRemaining;
     if (remaining && !["unknown", "unavailable"].includes(remaining.state)) {
