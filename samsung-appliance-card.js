@@ -271,8 +271,11 @@ function hasRemoteOvenModeRestrictions(device) {
 }
 
 function canStartRemotely(a) {
-  return !a.restrictRemoteOvenModes || a.active ||
-    REMOTE_STARTABLE_OVEN_MODES.has(normalizeMode(a.ents.cycle?.state));
+  const mode = normalizeMode(a.ents.cycle?.state);
+  const restrictedMode = a.kind === "oven" &&
+    (a.restrictRemoteOvenModes || mode.startsWith("microwave"));
+  return !restrictedMode ||
+    REMOTE_STARTABLE_OVEN_MODES.has(mode);
 }
 
 function isChildLocked(entity) {
